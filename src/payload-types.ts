@@ -63,12 +63,17 @@ export type SupportedTimezones =
 
 export interface Config {
   auth: {
-    users: UserAuthOperations;
+    personnel: PersonnelAuthOperations;
   };
   blocks: {};
   collections: {
-    users: User;
+    personnel: Personnel;
     media: Media;
+    groups: Group;
+    duty_types: DutyType;
+    duty_schedule: DutySchedule;
+    duty_exceptions: DutyException;
+    duty_exceptions_types: DutyExceptionsType;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -76,15 +81,20 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
+    personnel: PersonnelSelect<false> | PersonnelSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    groups: GroupsSelect<false> | GroupsSelect<true>;
+    duty_types: DutyTypesSelect<false> | DutyTypesSelect<true>;
+    duty_schedule: DutyScheduleSelect<false> | DutyScheduleSelect<true>;
+    duty_exceptions: DutyExceptionsSelect<false> | DutyExceptionsSelect<true>;
+    duty_exceptions_types: DutyExceptionsTypesSelect<false> | DutyExceptionsTypesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
   };
   db: {
-    defaultIDType: string;
+    defaultIDType: number;
   };
   fallbackLocale: null;
   globals: {};
@@ -93,13 +103,13 @@ export interface Config {
   widgets: {
     collections: CollectionsWidget;
   };
-  user: User;
+  user: Personnel;
   jobs: {
     tasks: unknown;
     workflows: unknown;
   };
 }
-export interface UserAuthOperations {
+export interface PersonnelAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -119,10 +129,16 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
+ * via the `definition` "personnel".
  */
-export interface User {
-  id: string;
+export interface Personnel {
+  id: number;
+  fullName: string;
+  /**
+   * Otomatik atanır, 1 = En kıdemli
+   */
+  rank?: number | null;
+  role?: ('admin' | 'chief' | 'member') | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -140,14 +156,14 @@ export interface User {
       }[]
     | null;
   password?: string | null;
-  collection: 'users';
+  collection: 'personnel';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
-  id: string;
+  id: number;
   alt: string;
   updatedAt: string;
   createdAt: string;
@@ -163,10 +179,137 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "groups".
+ */
+export interface Group {
+  id: number;
+  name: string;
+  description?: string | null;
+  /**
+   * Bu grubun nöbet kıdemlisi (sadece admin atayabilir)
+   */
+  chief?: (number | null) | Personnel;
+  /**
+   * Nöbet sonrası izinli gün sayısı (grup bazlı)
+   */
+  cooldownDays: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "duty_types".
+ */
+export interface DutyType {
+  id: number;
+  name: string;
+  year:
+    | '2026'
+    | '2027'
+    | '2028'
+    | '2029'
+    | '2030'
+    | '2031'
+    | '2032'
+    | '2033'
+    | '2034'
+    | '2035'
+    | '2036'
+    | '2037'
+    | '2038'
+    | '2039'
+    | '2040';
+  /**
+   * Her nöbet günü için cron ifadeleri
+   */
+  cronSchedules: {
+    /**
+     * Örn: 0 0 * * 1 (Her Pazartesi)
+     */
+    cron: string;
+    /**
+     * Bu cron ne için (örn: Her Pazartesi, 23 Nisan)
+     */
+    description: string;
+    id?: string | null;
+  }[];
+  /**
+   * Çakışma durumunda düşük sayı yüksek öncelik (1 = en yüksek)
+   */
+  priority: number;
+  /**
+   * Çeteledeki sütun sırası
+   */
+  columnOrder: number;
+  sortOrder: 'normal' | 'reverse';
+  /**
+   * Bi renk seç
+   */
+  color: string;
+  isActive?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "duty_schedule".
+ */
+export interface DutySchedule {
+  id: number;
+  personnel: number | Personnel;
+  dutyType: number | DutyType;
+  dutyDate: string;
+  status: 'scheduled' | 'completed' | 'cancelled' | 'swapped' | 'exception';
+  exceptionType?: ('official' | 'unofficial') | null;
+  /**
+   * Sarı mazeret sonrası bir sonraki ay öncelikli
+   */
+  isPriority?: boolean | null;
+  /**
+   * Değişim varsa asıl nöbetçi
+   */
+  originalPersonnel?: (number | null) | Personnel;
+  notes?: string | null;
+  group: number | Group;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "duty_exceptions".
+ */
+export interface DutyException {
+  id: number;
+  personnel: number | Personnel;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  exceptions_type: number | DutyExceptionsType;
+  status: 'approved' | 'pending' | 'rejected';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "duty_exceptions_types".
+ */
+export interface DutyExceptionsType {
+  id: number;
+  name: string;
+  type: 'official' | 'unofficial';
+  /**
+   * Bi renk seç
+   */
+  color: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: string;
+  id: number;
   key: string;
   data:
     | {
@@ -183,20 +326,40 @@ export interface PayloadKv {
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: string;
+  id: number;
   document?:
     | ({
-        relationTo: 'users';
-        value: string | User;
+        relationTo: 'personnel';
+        value: number | Personnel;
       } | null)
     | ({
         relationTo: 'media';
-        value: string | Media;
+        value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'groups';
+        value: number | Group;
+      } | null)
+    | ({
+        relationTo: 'duty_types';
+        value: number | DutyType;
+      } | null)
+    | ({
+        relationTo: 'duty_schedule';
+        value: number | DutySchedule;
+      } | null)
+    | ({
+        relationTo: 'duty_exceptions';
+        value: number | DutyException;
+      } | null)
+    | ({
+        relationTo: 'duty_exceptions_types';
+        value: number | DutyExceptionsType;
       } | null);
   globalSlug?: string | null;
   user: {
-    relationTo: 'users';
-    value: string | User;
+    relationTo: 'personnel';
+    value: number | Personnel;
   };
   updatedAt: string;
   createdAt: string;
@@ -206,10 +369,10 @@ export interface PayloadLockedDocument {
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: string;
+  id: number;
   user: {
-    relationTo: 'users';
-    value: string | User;
+    relationTo: 'personnel';
+    value: number | Personnel;
   };
   key?: string | null;
   value?:
@@ -229,7 +392,7 @@ export interface PayloadPreference {
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: string;
+  id: number;
   name?: string | null;
   batch?: number | null;
   updatedAt: string;
@@ -237,9 +400,12 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
+ * via the `definition` "personnel_select".
  */
-export interface UsersSelect<T extends boolean = true> {
+export interface PersonnelSelect<T extends boolean = true> {
+  fullName?: T;
+  rank?: T;
+  role?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -274,6 +440,82 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "groups_select".
+ */
+export interface GroupsSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  chief?: T;
+  cooldownDays?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "duty_types_select".
+ */
+export interface DutyTypesSelect<T extends boolean = true> {
+  name?: T;
+  year?: T;
+  cronSchedules?:
+    | T
+    | {
+        cron?: T;
+        description?: T;
+        id?: T;
+      };
+  priority?: T;
+  columnOrder?: T;
+  sortOrder?: T;
+  color?: T;
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "duty_schedule_select".
+ */
+export interface DutyScheduleSelect<T extends boolean = true> {
+  personnel?: T;
+  dutyType?: T;
+  dutyDate?: T;
+  status?: T;
+  exceptionType?: T;
+  isPriority?: T;
+  originalPersonnel?: T;
+  notes?: T;
+  group?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "duty_exceptions_select".
+ */
+export interface DutyExceptionsSelect<T extends boolean = true> {
+  personnel?: T;
+  startDate?: T;
+  endDate?: T;
+  reason?: T;
+  exceptions_type?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "duty_exceptions_types_select".
+ */
+export interface DutyExceptionsTypesSelect<T extends boolean = true> {
+  name?: T;
+  type?: T;
+  color?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
