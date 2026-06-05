@@ -8,6 +8,7 @@ import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { Toaster } from '@/components/ui/sonner'
+import { getAllGroups } from 'actions/groups'
 
 export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props

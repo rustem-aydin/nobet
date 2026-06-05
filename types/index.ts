@@ -6,3 +6,8 @@ export type AddDutyExceptionsFormValues = Pick<
 >
 
 export type ID = number
+
+export interface SlugProps {
+  params: Promise<{ group: string }>
+  children?: React.ReactNode
+}

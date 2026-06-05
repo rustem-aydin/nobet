@@ -7,7 +7,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
-import { MoreHorizontalIcon } from 'lucide-react'
 import Link from 'next/link'
 
 export function NavProjects({

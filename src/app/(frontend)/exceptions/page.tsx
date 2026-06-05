@@ -9,17 +9,12 @@ import { getAuth } from 'actions/auth'
 import { getAllDutyExceptionTypes } from 'actions/duty_exceptions_types'
 import { getAllDutyTypes } from 'actions/duty_types'
 
-async function getCalendarData() {
-  return {
-    events: await getAllDutyExceptions(3),
-    exceptions_types: await getAllDutyExceptionTypes(0),
-    users: await getAllPersonnels(),
-    auth: await getAuth(),
-    duty_types: await getAllDutyTypes(0),
-  }
-}
 export default async function ExceptionsPage() {
-  const { events, auth, users, exceptions_types, duty_types } = await getCalendarData()
+  const events = await getAllDutyExceptions(3)
+  const exceptions_types = await getAllDutyExceptionTypes(0)
+  const users = await getAllPersonnels(0)
+  const auth = await getAuth()
+  const duty_types = await getAllDutyTypes(0)
   return (
     <main className="flex max-h-screen flex-col">
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">

@@ -1,3 +1,4 @@
+// components/nav-menu.tsx
 'use client'
 
 import {
@@ -6,37 +7,26 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from '@/components/ui/sidebar'
-import { MoreHorizontalIcon } from 'lucide-react'
 import Link from 'next/link'
 
-export function NavMain({
-  items,
-}: {
-  items: {
-    title: string
-    url: string
-    icon?: React.ReactNode
-    isActive?: boolean
-    items?: {
-      title: string
-      url: string
-    }[]
-  }[]
-}) {
+export interface NavItem {
+  name: string
+  url: string
+  icon: React.ReactNode
+}
+
+export function NavMenu({ label, items }: { label: string; items: NavItem[] }) {
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Projects</SidebarGroupLabel>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
-          <SidebarMenuItem key={item.title}>
+          <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
               <Link href={item.url}>
                 {item.icon}
-                <span>{item.title}</span>
+                <span>{item.name}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

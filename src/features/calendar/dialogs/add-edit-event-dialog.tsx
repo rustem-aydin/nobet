@@ -32,11 +32,10 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { useCalendar } from '@/features/calendar/contexts/calendar-context'
 import { useDisclosure } from '@/features/calendar/hooks'
-import { eventSchema, type TEventFormData } from '@/features/calendar/schemas'
 import { DutyException, DutyExceptionsType } from '@/payload-types'
 import FormDateRange from '@/components/form-date'
-import { getAllDutyExceptionTypes } from 'actions/duty_exceptions_types'
 import { Dialog } from '@/components/ui/dialog'
+import { eventSchema, TEventFormData } from 'types/schemas'
 
 interface IProps {
   children: ReactNode
@@ -47,33 +46,8 @@ interface IProps {
 
 export function AddEditEventDialog({ children, startDate, startTime, event }: IProps) {
   const { isOpen, onClose, onToggle } = useDisclosure()
-  const { addEvent, updateEvent } = useCalendar()
+  const { addEvent, updateEvent, exceptions_types } = useCalendar()
   const isEditing = !!event
-
-  // exceptions_types'i local state'e al, context'ten değil
-  const [exceptions_types, setExceptionTypes] = useState<DutyExceptionsType[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-
-  // Bir kere yükle
-  useEffect(() => {
-    let mounted = true
-    setIsLoading(true)
-
-    getAllDutyExceptionTypes()
-      .then((types) => {
-        if (mounted) {
-          setExceptionTypes(types)
-          setIsLoading(false)
-        }
-      })
-      .catch(() => {
-        if (mounted) setIsLoading(false)
-      })
-
-    return () => {
-      mounted = false
-    }
-  }, []) // Boş dependency - sadece mount'ta çalışır
 
   const eventReason = event?.reason
   const eventExceptionsTypeId = useMemo(() => {
@@ -121,7 +95,6 @@ export function AddEditEventDialog({ children, startDate, startTime, event }: IP
   // Dialog açıldığında veya edit moduna geçtiğinde form'u resetle
   useEffect(() => {
     if (!isOpen) return
-    if (isLoading) return
 
     const exceptionsTypeId = isEditing ? eventExceptionsTypeId : exceptions_types[0]?.id
 
@@ -135,7 +108,6 @@ export function AddEditEventDialog({ children, startDate, startTime, event }: IP
     })
   }, [
     isOpen,
-    isLoading,
     isEditing,
     eventReason,
     eventExceptionsTypeId,
@@ -212,12 +184,12 @@ export function AddEditEventDialog({ children, startDate, startTime, event }: IP
                     <Select
                       value={field.value?.toString() ?? ''}
                       onValueChange={(val) => field.onChange(Number(val))}
-                      disabled={isLoading || exceptions_types.length === 0}
+                      disabled={exceptions_types.length === 0}
                     >
                       <SelectTrigger
                         className={`w-full ${fieldState.invalid ? 'border-red-500' : ''}`}
                       >
-                        <SelectValue placeholder={isLoading ? 'Yükleniyor...' : 'Bir tür seçin'} />
+                        <SelectValue placeholder={'Bir tür seçin'} />
                       </SelectTrigger>
                       <SelectContent>
                         {exceptions_types.map((type) => (
@@ -265,7 +237,7 @@ export function AddEditEventDialog({ children, startDate, startTime, event }: IP
               İptal
             </Button>
           </DialogClose>
-          <Button form="event-form" type="submit" disabled={isLoading}>
+          <Button form="event-form" type="submit">
             {isEditing ? 'Değişiklikleri Kaydet' : 'Etkinlik Oluştur'}
           </Button>
         </DialogFooter>

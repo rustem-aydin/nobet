@@ -74,6 +74,7 @@ export interface Config {
     duty_schedule: DutySchedule;
     duty_exceptions: DutyException;
     duty_exceptions_types: DutyExceptionsType;
+    duty_swap_requests: DutySwapRequest;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -88,6 +89,7 @@ export interface Config {
     duty_schedule: DutyScheduleSelect<false> | DutyScheduleSelect<true>;
     duty_exceptions: DutyExceptionsSelect<false> | DutyExceptionsSelect<true>;
     duty_exceptions_types: DutyExceptionsTypesSelect<false> | DutyExceptionsTypesSelect<true>;
+    duty_swap_requests: DutySwapRequestsSelect<false> | DutySwapRequestsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -138,6 +140,7 @@ export interface Personnel {
    * Otomatik atanır, 1 = En kıdemli
    */
   rank?: number | null;
+  group?: (number | null) | Group;
   role?: ('admin' | 'chief' | 'member') | null;
   updatedAt: string;
   createdAt: string;
@@ -160,25 +163,6 @@ export interface Personnel {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: number;
-  alt: string;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "groups".
  */
 export interface Group {
@@ -198,48 +182,62 @@ export interface Group {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: number;
+  alt: string;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "duty_types".
  */
 export interface DutyType {
   id: number;
   name: string;
-  year:
-    | '2026'
-    | '2027'
-    | '2028'
-    | '2029'
-    | '2030'
-    | '2031'
-    | '2032'
-    | '2033'
-    | '2034'
-    | '2035'
-    | '2036'
-    | '2037'
-    | '2038'
-    | '2039'
-    | '2040';
   /**
-   * Her nöbet günü için cron ifadeleri
+   * Her yıl için ayrı cron tanımları
    */
-  cronSchedules: {
-    /**
-     * Örn: 0 0 * * 1 (Her Pazartesi)
-     */
-    cron: string;
-    /**
-     * Bu cron ne için (örn: Her Pazartesi, 23 Nisan)
-     */
-    description: string;
+  yearConfigs: {
+    year:
+      | '2026'
+      | '2027'
+      | '2028'
+      | '2029'
+      | '2030'
+      | '2031'
+      | '2032'
+      | '2033'
+      | '2034'
+      | '2035'
+      | '2036'
+      | '2037'
+      | '2038'
+      | '2039'
+      | '2040';
+    cronSchedules: {
+      cron: string;
+      description: string;
+      id?: string | null;
+    }[];
+    isActive?: boolean | null;
     id?: string | null;
   }[];
   /**
    * Çakışma durumunda düşük sayı yüksek öncelik (1 = en yüksek)
    */
   priority: number;
-  /**
-   * Çeteledeki sütun sırası
-   */
   columnOrder: number;
   sortOrder: 'normal' | 'reverse';
   /**
@@ -256,6 +254,16 @@ export interface DutyType {
  */
 export interface DutySchedule {
   id: number;
+  swapRequest?: (number | null) | DutySwapRequest;
+  swapHistory?:
+    | {
+        date: string;
+        fromPersonnel: number | Personnel;
+        toPersonnel: number | Personnel;
+        type: 'mutual' | 'unilateral';
+        id?: string | null;
+      }[]
+    | null;
   personnel: number | Personnel;
   dutyType: number | DutyType;
   dutyDate: string;
@@ -271,6 +279,28 @@ export interface DutySchedule {
   originalPersonnel?: (number | null) | Personnel;
   notes?: string | null;
   group: number | Group;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "duty_swap_requests".
+ */
+export interface DutySwapRequest {
+  id: number;
+  requesterPersonnel: number | Personnel;
+  requesterDuty: number | DutySchedule;
+  type: 'mutual' | 'unilateral';
+  targetPersonnel?: (number | null) | Personnel;
+  targetDuty?: (number | null) | DutySchedule;
+  /**
+   * Karşılıksız değişimde asıl nöbetçinin mazeret tipi
+   */
+  excuseType?: ('official' | 'unofficial') | null;
+  status: 'pending' | 'approved' | 'rejected';
+  approvedBy?: (number | null) | Personnel;
+  approvedAt?: string | null;
+  notes?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -355,6 +385,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'duty_exceptions_types';
         value: number | DutyExceptionsType;
+      } | null)
+    | ({
+        relationTo: 'duty_swap_requests';
+        value: number | DutySwapRequest;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -405,6 +439,7 @@ export interface PayloadMigration {
 export interface PersonnelSelect<T extends boolean = true> {
   fullName?: T;
   rank?: T;
+  group?: T;
   role?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -459,12 +494,18 @@ export interface GroupsSelect<T extends boolean = true> {
  */
 export interface DutyTypesSelect<T extends boolean = true> {
   name?: T;
-  year?: T;
-  cronSchedules?:
+  yearConfigs?:
     | T
     | {
-        cron?: T;
-        description?: T;
+        year?: T;
+        cronSchedules?:
+          | T
+          | {
+              cron?: T;
+              description?: T;
+              id?: T;
+            };
+        isActive?: T;
         id?: T;
       };
   priority?: T;
@@ -480,6 +521,16 @@ export interface DutyTypesSelect<T extends boolean = true> {
  * via the `definition` "duty_schedule_select".
  */
 export interface DutyScheduleSelect<T extends boolean = true> {
+  swapRequest?: T;
+  swapHistory?:
+    | T
+    | {
+        date?: T;
+        fromPersonnel?: T;
+        toPersonnel?: T;
+        type?: T;
+        id?: T;
+      };
   personnel?: T;
   dutyType?: T;
   dutyDate?: T;
@@ -514,6 +565,24 @@ export interface DutyExceptionsTypesSelect<T extends boolean = true> {
   name?: T;
   type?: T;
   color?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "duty_swap_requests_select".
+ */
+export interface DutySwapRequestsSelect<T extends boolean = true> {
+  requesterPersonnel?: T;
+  requesterDuty?: T;
+  type?: T;
+  targetPersonnel?: T;
+  targetDuty?: T;
+  excuseType?: T;
+  status?: T;
+  approvedBy?: T;
+  approvedAt?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }

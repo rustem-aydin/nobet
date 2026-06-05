@@ -1,5 +1,5 @@
+// collections/DutyTypes.ts
 import type { CollectionConfig } from 'payload'
-import { isAdmin } from './access'
 import { colorPickerField } from './custom/ColorPicker'
 
 export const DutyTypes: CollectionConfig = {
@@ -12,9 +12,9 @@ export const DutyTypes: CollectionConfig = {
     singular: 'Nöbet Türü',
   },
   access: {
-    create: isAdmin,
-    update: isAdmin,
-    delete: isAdmin,
+    create: ({ req: { user } }) => user?.role === 'admin',
+    update: ({ req: { user } }) => user?.role === 'admin',
+    delete: ({ req: { user } }) => user?.role === 'admin',
     read: () => true,
   },
   fields: [
@@ -25,41 +25,49 @@ export const DutyTypes: CollectionConfig = {
       label: 'Nöbet Türü Adı',
     },
     {
-      name: 'year',
-      type: 'select',
-      required: true,
-      label: 'Yıl',
-      options: Array.from({ length: 15 }, (_, i) => {
-        const year = 2026 + i
-        return { label: String(year), value: String(year) }
-      }),
-    },
-    {
-      name: 'cronSchedules',
+      name: 'yearConfigs',
       type: 'array',
       required: true,
-      label: 'Cron Schedule Tanımları',
+      label: 'Yıllık Konfigürasyonlar',
       admin: {
-        description: 'Her nöbet günü için cron ifadeleri',
+        description: 'Her yıl için ayrı cron tanımları',
       },
       fields: [
         {
-          name: 'cron',
-          type: 'text',
+          name: 'year',
+          type: 'select',
           required: true,
-          label: 'Cron İfadesi',
-          admin: {
-            description: 'Örn: 0 0 * * 1 (Her Pazartesi)',
-          },
+          label: 'Yıl',
+          options: Array.from({ length: 15 }, (_, i) => {
+            const year = 2026 + i
+            return { label: String(year), value: String(year) }
+          }),
         },
         {
-          name: 'description',
-          type: 'text',
+          name: 'cronSchedules',
+          type: 'array',
           required: true,
-          label: 'Açıklama',
-          admin: {
-            description: 'Bu cron ne için (örn: Her Pazartesi, 23 Nisan)',
-          },
+          label: 'Cron Schedule Tanımları',
+          fields: [
+            {
+              name: 'cron',
+              type: 'text',
+              required: true,
+              label: 'Cron İfadesi',
+            },
+            {
+              name: 'description',
+              type: 'text',
+              required: true,
+              label: 'Açıklama',
+            },
+          ],
+        },
+        {
+          name: 'isActive',
+          type: 'checkbox',
+          defaultValue: true,
+          label: 'Aktif',
         },
       ],
     },
@@ -79,9 +87,6 @@ export const DutyTypes: CollectionConfig = {
       required: true,
       unique: true,
       label: 'Sütun Sırası',
-      admin: {
-        description: 'Çeteledeki sütun sırası',
-      },
     },
     {
       name: 'sortOrder',
@@ -98,9 +103,7 @@ export const DutyTypes: CollectionConfig = {
       name: 'color',
       label: 'Renk Seç',
       required: true,
-      admin: {
-        description: 'Bi renk seç',
-      },
+      admin: { description: 'Bi renk seç' },
     }),
     {
       name: 'isActive',

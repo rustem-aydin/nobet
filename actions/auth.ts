@@ -6,6 +6,8 @@ import { revalidatePath } from 'next/cache'
 import { getPayload } from 'payload'
 import { headers } from 'next/headers'
 import { Personnel } from '@/payload-types'
+import { LoginFormValues } from 'types/schemas'
+import { redirect } from 'next/navigation'
 
 export async function logoutAction() {
   try {
@@ -14,7 +16,6 @@ export async function logoutAction() {
     throw new Error(`Logout failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 
-  // 1. Önce tüm sayfa önbelleğini temizle (veya spesifik bir path: '/')
   revalidatePath('/', 'layout')
 }
 
@@ -22,4 +23,20 @@ export async function getAuth(): Promise<Personnel> {
   const payload = await getPayload({ config })
   const user = await payload.auth({ headers: await headers() })
   return user.user as Personnel
+}
+
+export async function loginAction({ email, password }: LoginFormValues) {
+  const payload = await getPayload({ config })
+
+  const result = await payload.login({
+    collection: 'personnel',
+    data: {
+      email: email,
+      password: password,
+    },
+  })
+  if (result.token) {
+    redirect('/exceptions')
+  }
+  return result
 }

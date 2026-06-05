@@ -14,6 +14,7 @@ import { seedData } from 'actions/seed'
 import { DutySchedule } from './collections/DutySchedule'
 import { DutyExceptions } from './collections/DutyExceptions'
 import { DutyExceptionsTypes } from './collections/DutyExceptionsTypes'
+import { DutySwapRequests } from './collections/DutySwapRequests'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -53,6 +54,7 @@ export default buildConfig({
     DutySchedule,
     DutyExceptions,
     DutyExceptionsTypes,
+    DutySwapRequests,
   ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

@@ -5,8 +5,8 @@ import { staggerContainer, transition } from '@/features/calendar/animations'
 import { useCalendar } from '@/features/calendar/contexts/calendar-context'
 import { calculateMonthEventPositions, getCalendarCells } from '@/features/calendar/helpers'
 import { DayCell } from '@/features/calendar/views/month-view/day-cell'
-import type { DutyException } from '@/payload-types'
 import { expandDutyTypesToDates, getDutyTypeForDate } from '@/helpers/dutyTypeMatcher'
+import type { DutyException } from '@/payload-types'
 
 interface IProps {
   singleDayEvents: DutyException[]
@@ -17,9 +17,13 @@ const WEEK_DAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
 
 export function CalendarMonthView({ singleDayEvents, multiDayEvents }: IProps) {
   const { selectedDate, duty_types } = useCalendar()
-  const year = selectedDate.getFullYear().toString()
+  const year = selectedDate.getFullYear()
 
-  const allEvents = [...multiDayEvents, ...singleDayEvents]
+  const allEvents = useMemo(
+    () => [...multiDayEvents, ...singleDayEvents],
+    [multiDayEvents, singleDayEvents],
+  )
+
   const cells = useMemo(() => getCalendarCells(selectedDate), [selectedDate])
 
   const eventPositions = useMemo(
@@ -27,11 +31,21 @@ export function CalendarMonthView({ singleDayEvents, multiDayEvents }: IProps) {
     [multiDayEvents, singleDayEvents, selectedDate],
   )
 
-  const dutyTypesWithDates = useMemo(
-    () => expandDutyTypesToDates(duty_types, selectedDate.getFullYear()),
-    [duty_types, selectedDate],
-  )
+  // YILA GÖRE duty_types filtrele ve cache'le
+  const dutyTypesWithDates = useMemo(() => {
+    // Sadece aktif yılın config'i olanları al
+    const filteredByYear = duty_types
+      .map((dt) => ({
+        ...dt,
+        yearConfigs:
+          dt.yearConfigs?.filter((yc) => yc.year === year.toString() && yc.isActive) || [],
+      }))
+      .filter((dt) => dt.yearConfigs.length > 0)
 
+    return expandDutyTypesToDates(filteredByYear, year)
+  }, [duty_types, year]) // duty_types değişince yeniden hesapla
+
+  // Hücreleri nöbet türleriyle eşleştir
   const cellDutyTypes = useMemo(() => {
     const map = new Map<string, ReturnType<typeof getDutyTypeForDate>>()
     cells.forEach((cell) => {

@@ -21,6 +21,52 @@ export const DutySchedule: CollectionConfig = {
   },
   fields: [
     {
+      name: 'swapRequest',
+      type: 'relationship',
+      relationTo: 'duty_swap_requests',
+      label: 'Değişim Talebi',
+      admin: {
+        condition: (data) => data.status === 'swapped',
+      },
+    },
+    {
+      name: 'swapHistory',
+      type: 'array',
+      label: 'Değişim Geçmişi',
+      fields: [
+        {
+          name: 'date',
+          type: 'date',
+          required: true,
+          label: 'Tarih',
+        },
+        {
+          name: 'fromPersonnel',
+          type: 'relationship',
+          relationTo: 'personnel',
+          required: true,
+          label: 'Eski Nöbetçi',
+        },
+        {
+          name: 'toPersonnel',
+          type: 'relationship',
+          relationTo: 'personnel',
+          required: true,
+          label: 'Yeni Nöbetçi',
+        },
+        {
+          name: 'type',
+          type: 'select',
+          required: true,
+          options: [
+            { label: 'Karşılıklı', value: 'mutual' },
+            { label: 'Karşılıksız', value: 'unilateral' },
+          ],
+          label: 'Değişim Türü',
+        },
+      ],
+    },
+    {
       name: 'personnel',
       type: 'relationship',
       relationTo: 'personnel',

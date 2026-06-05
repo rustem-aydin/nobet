@@ -24,6 +24,7 @@ export const Groups: CollectionConfig = {
       unique: true,
       label: 'Grup Adı',
     },
+
     {
       name: 'description',
       type: 'textarea',

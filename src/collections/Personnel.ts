@@ -4,10 +4,26 @@ import { canRead, isAdmin } from './access'
 
 export const Personnel: CollectionConfig = {
   slug: 'personnel',
+  auth: {
+    // Token süresi: 2 saat (7200 saniye)
+    tokenExpiration: 7200,
+
+    // Session kullanımı (default: true)
+    useSessions: true,
+
+    // Cookie ayarları
+    cookies: {
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Lax',
+    },
+
+    // Güvenlik
+    maxLoginAttempts: 5,
+    lockTime: 600 * 1000, // 10 dakika
+  },
   admin: {
     useAsTitle: 'fullName',
   },
-  auth: true,
   labels: {
     singular: 'Personel',
     plural: 'Personeller',
@@ -40,16 +56,16 @@ export const Personnel: CollectionConfig = {
         description: 'Otomatik atanır, 1 = En kıdemli',
       },
     },
-    // {
-    //   name: 'group',
-    //   type: 'relationship',
-    //   relationTo: 'groups',
-    //   required: true,
-    //   admin: {
-    //     condition: (_, siblingData) => Boolean(siblingData?.id),
-    //   },
-    //   label: 'Nöbet Grubu',
-    // },
+    {
+      name: 'group',
+      type: 'relationship',
+      relationTo: 'groups',
+      required: true,
+      admin: {
+        condition: (_, siblingData) => Boolean(siblingData?.id),
+      },
+      label: 'Nöbet Grubu',
+    },
 
     {
       name: 'role',

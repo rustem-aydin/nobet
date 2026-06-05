@@ -61,9 +61,9 @@ export function EventDetailsDialog({ event, children }: IProps) {
   const deleteEvent = async (eventId: number) => {
     try {
       await removeEvent(eventId)
-      toast.success('Etkinlik başarıyla silindi.')
+      toast.success('Mazeret başarıyla silindi.')
     } catch {
-      toast.error('Etkinlik silinirken bir hata oluştu.')
+      toast.error('Mazeret silinirken bir hata oluştu.')
     }
   }
 

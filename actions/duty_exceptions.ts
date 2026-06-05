@@ -1,16 +1,21 @@
 'use server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { DutyException, DutyExceptionsType } from '@/payload-types'
+import { DutyException, DutyExceptionsType, Group } from '@/payload-types'
 import { headers } from 'next/headers'
 import { AddDutyExceptionsFormValues, ID } from 'types'
 import { revalidatePath } from 'next/cache'
+import { getAuth } from './auth'
 
 export const getAllDutyExceptions = async (depth: number = 0): Promise<DutyException[]> => {
   const payload = await getPayload({ config })
+  const auth = await getAuth()
   const exceptions = await payload.find({
     collection: 'duty_exceptions',
     depth,
+    where: {
+      'personnel.group.id': { equals: (auth!.group as Group)!.id },
+    },
   })
   return exceptions.docs
 }
