@@ -51,16 +51,6 @@ export function ScheduleCell({ date, personnelId, personnelName, dutyTypeId, isE
           <ContextMenuItem onClick={() => console.log('Detay', date)}>Detaylar</ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
-
-      {showSwapModal && (
-        <SwapRequestModal
-          personnelId={personnelId}
-          personnelName={personnelName}
-          dutyTypeId={dutyTypeId}
-          date={date!}
-          onClose={() => setShowSwapModal(false)}
-        />
-      )}
     </>
   )
 }

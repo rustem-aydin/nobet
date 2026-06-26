@@ -10,7 +10,6 @@ import { useCalendar } from '@/features/calendar/contexts/calendar-context'
 
 import { getEventsCount, navigateDate, rangeText } from '@/features/calendar/helpers'
 
-import type { IEvent } from '@/features/calendar/interfaces'
 import type { TCalendarView } from '@/features/calendar/types'
 import { DutyException } from '@/payload-types'
 

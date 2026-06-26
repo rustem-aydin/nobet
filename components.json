@@ -23,6 +23,7 @@
   },
   "registries": {
     "@coss": "https://coss.com/ui/r/{name}.json",
-    "@efferd": "https://efferd.com/r/{name}.json"
+    "@efferd": "https://efferd.com/r/{name}.json",
+    "@jalco": "https://ui.justinlevine.me/r/{name}.json"
   }
 }

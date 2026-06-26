@@ -13,8 +13,6 @@ import {
 } from '@/components/ui/context-menu'
 import { ArrowLeftRight, FileWarning, Info, User } from 'lucide-react'
 import { DutyType, Personnel } from '@/payload-types'
-import { SwapRequestModal } from '../schedule/swap-request-modal'
-import { MazeretBildirModal } from './mazeret-bildir-modal'
 import { NobetDetayModal } from './nöbet-detay-modal'
 
 interface Props {
@@ -113,14 +111,6 @@ export function ScheduleCeteleDateContextMenu({
         swapType={swapType}
         auth={auth}
       /> */}
-
-      <MazeretBildirModal
-        open={exceptionOpen}
-        onOpenChange={setExceptionOpen}
-        date={date}
-        personnel={personnel}
-        auth={auth}
-      />
 
       <NobetDetayModal
         open={detailOpen}

@@ -1,40 +1,70 @@
 'use client'
 
-import { format } from 'date-fns'
+import { startTransition, useMemo } from 'react'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { format, parseISO, isValid, addMonths, endOfMonth, isAfter } from 'date-fns'
 import { tr } from 'date-fns/locale'
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useMemo } from 'react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { buttonHover, transition } from '@/features/calendar/animations'
-import { getEventsCount, navigateDate, rangeText } from '@/features/calendar/helpers'
+import { navigateDate, rangeText } from '@/features/calendar/helpers'
+import { toast } from 'sonner'
 import type { TCalendarView } from '@/features/calendar/types'
-import { DutyException } from '@/payload-types'
+
+const MotionButton = motion.create(Button)
 
 interface IProps {
   view: TCalendarView
-  events: DutyException[]
-  selectedDate: Date
-  setSelectedDate: (date: Date) => void
 }
 
-const MotionButton = motion.create(Button)
-const MotionBadge = motion.create(Badge)
+export function ScheduleDateNavigator({ view }: IProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
-export function ScheduleDateNavigator({ view, events, selectedDate, setSelectedDate }: IProps) {
+  // 1. URL'den tarihi al ve Date objesine çevir (Memoize ederek)
+  const selectedDate = useMemo(() => {
+    const dateParam = searchParams.get('date')
+    if (dateParam) {
+      const parsed = parseISO(dateParam)
+      if (isValid(parsed)) return parsed
+    }
+    return new Date()
+  }, [searchParams])
+
+  // Mevcut aydan 1 ay sonrasının son günü (sınır tarihi)
+  const maxDate = useMemo(() => endOfMonth(addMonths(new Date(), 1)), [])
+
+  // 2. Tarih değiştiğinde URL'i güncelle
+  const updateDate = (date: Date) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('date', format(date, 'yyyy-MM-dd'))
+
+    const currentUrl = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname
+    sessionStorage.setItem('last-calendar-url', currentUrl)
+
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`, { scroll: false })
+    })
+  }
+
   const month = format(selectedDate, 'MMMM', { locale: tr })
   const year = selectedDate.getFullYear()
 
-  const eventCount = useMemo(
-    () => getEventsCount(events, selectedDate, view),
-    [events, selectedDate, view],
-  )
+  const handlePrevious = () => updateDate(navigateDate(selectedDate, view, 'previous'))
 
-  const handlePrevious = () => setSelectedDate(navigateDate(selectedDate, view, 'previous'))
-  const handleNext = () => setSelectedDate(navigateDate(selectedDate, view, 'next'))
+  const handleNext = () => {
+    const nextDate = navigateDate(selectedDate, view, 'next')
 
-  const eventLabel = eventCount === 1 ? 'mazeret' : 'mazeret'
+    // Eğer sonraki tarih, izin verilen maksimum tarihi aşıyorsa hata fırlat
+    if (isAfter(nextDate, maxDate)) {
+      toast.error('En fazla mevcut aydan 1 ay sonrasına kadar navigate edebilirsiniz.')
+      return
+    }
+
+    updateDate(nextDate)
+  }
 
   return (
     <div className="space-y-0.5">
@@ -47,18 +77,6 @@ export function ScheduleDateNavigator({ view, events, selectedDate, setSelectedD
         >
           {month} {year}
         </motion.span>
-        <AnimatePresence mode="wait">
-          <MotionBadge
-            key={eventCount}
-            variant="secondary"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            transition={transition}
-          >
-            {eventCount} {eventLabel}
-          </MotionBadge>
-        </AnimatePresence>
       </div>
 
       <div className="flex items-center gap-2">

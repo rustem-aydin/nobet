@@ -72,7 +72,7 @@ export function expandDutyTypesToDates(dutyTypes: DutyType[], year: number): Dut
 export function getDutyTypeForDate(
   date: Date,
   dutyTypesWithDates: DutyTypeWithDates[],
-): { name: string; color: string; description: string; isHoliday: boolean } | null {
+): { id: number; name: string; color: string; description: string; isHoliday: boolean } | null {
   const target = startOfDay(date)
   const sorted = [...dutyTypesWithDates].sort((a, b) => a.priority - b.priority)
 
@@ -80,6 +80,7 @@ export function getDutyTypeForDate(
     const found = dt.dates.find((d) => isSameDay(d.date, target))
     if (found) {
       return {
+        id: dt.id,
         name: dt.name,
         color: dt.color,
         description: found.description,
@@ -98,29 +99,37 @@ export function getDutyDatesForMonth(
 ): Array<{ date: Date; description: string }> {
   const results: Array<{ date: Date; description: string }> = []
 
+  // Ayın ilk günü (00:00:00 UTC)
   const start = new Date(Date.UTC(year, month, 1))
-  const end = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59))
+  // Ayın son günü + 1 gün (endDate dahil etmek için)
+  const end = new Date(Date.UTC(year, month + 1, 1))
+  // currentDate'yi 1 gün geriye al (cron parser currentDate'i dahil etmiyor)
+  const currentDate = new Date(Date.UTC(year, month, 0))
 
   for (const { cron, description } of cronSchedules) {
     try {
       const interval = CronExpressionParser.parse(cron, {
-        currentDate: start.toISOString(),
+        currentDate: currentDate.toISOString(),
         endDate: end.toISOString(),
         tz: 'UTC',
       })
 
-      const dates = interval.take(31)
+      const daysInMonth = new Date(year, month + 1, 0).getDate()
+      const dates = interval.take(daysInMonth + 5)
 
       for (const d of dates) {
         const rawDate = d.toDate()
-        // Yıl, ay, gün'ü al, saati sıfırla (timezone sorununu önler)
         const cleanDate = new Date(
           Date.UTC(rawDate.getUTCFullYear(), rawDate.getUTCMonth(), rawDate.getUTCDate()),
         )
-        results.push({
-          date: cleanDate, // UTC midnight olarak sakla, local'e çevirme
-          description,
-        })
+
+        // Sadece ayın içinde kalan tarihleri ekle
+        if (cleanDate.getUTCMonth() === month && cleanDate.getUTCFullYear() === year) {
+          results.push({
+            date: cleanDate,
+            description,
+          })
+        }
       }
     } catch (err) {
       console.error('Cron hatası:', cron, err)

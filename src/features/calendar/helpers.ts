@@ -6,6 +6,7 @@ import {
   differenceInDays,
   differenceInMinutes,
   eachDayOfInterval,
+  endOfDay,
   endOfMonth,
   endOfWeek,
   endOfYear,
@@ -81,16 +82,41 @@ export function navigateDate(
 }
 
 export function getEventsCount(events: DutyException[], date: Date, view: TCalendarView): number {
-  const compareFns: Record<TCalendarView, (d1: Date, d2: Date) => boolean> = {
-    day: isSameDay,
-    week: isSameWeek,
-    month: isSameMonth,
-    year: isSameYear,
-    agenda: isSameMonth,
+  // Hedef aralığı (target range) view'e göre belirle
+  let targetStart: Date
+  let targetEnd: Date
+
+  switch (view) {
+    case 'day':
+      targetStart = startOfDay(date)
+      targetEnd = endOfDay(date)
+      break
+    case 'week':
+      targetStart = startOfWeek(date, { weekStartsOn: 1 }) // Pazartesi başlangıçlı
+      targetEnd = endOfWeek(date, { weekStartsOn: 1 })
+      break
+    case 'month':
+    case 'agenda':
+      targetStart = startOfMonth(date)
+      targetEnd = endOfMonth(date)
+      break
+    case 'year':
+      targetStart = startOfYear(date)
+      targetEnd = endOfYear(date)
+      break
+    default:
+      return 0
   }
 
-  const compareFn = compareFns[view]
-  return events.filter((event) => compareFn(parseISO(event.startDate), date)).length
+  // Olayların aralığı ile hedef aralığın çakışıp çakışmadığını kontrol et
+  return events?.filter((event) => {
+    const eventStart = parseISO(event.startDate)
+    const eventEnd = parseISO(event.endDate)
+
+    // Çakışma koşulu: Olayın başlangıcı, hedefin bitişinden ÖNCE veya EŞİT
+    // VE olayın bitişi, hedefin başlangıcından SONRA veya EŞİT
+    return eventStart <= targetEnd && eventEnd >= targetStart
+  }).length
 }
 
 export function groupEvents(dayEvents: IEvent[]): IEvent[][] {

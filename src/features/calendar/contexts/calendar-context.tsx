@@ -4,14 +4,16 @@ import type React from 'react'
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useLocalStorage } from '@/features/calendar/hooks'
 import type { TCalendarView } from '@/features/calendar/types'
-import { DutyException, DutyExceptionsType, DutyType, Personnel } from '@/payload-types'
-import {
-  AddDutyExceptions,
-  removeDutyException,
-  updateDutyException,
-} from 'actions/duty_exceptions'
+import { DutyException, DutyExceptionsType, DutyType, Group, Personnel } from '@/payload-types'
+
 import { AddDutyExceptionsFormValues } from 'types'
 import { toast } from 'sonner'
+import {
+  AddDutyExceptions,
+  getAllDutyExceptions,
+  removeDutyException,
+  updateDutyException,
+} from '@/collections/DutyExceptions/actions/duty_exceptions'
 
 interface ICalendarContext {
   selectedDate: Date
@@ -69,7 +71,6 @@ export function CalendarProvider({
   duty_types,
   exceptions_types,
   auth,
-  events,
   badge = 'colored',
   view = 'day',
 }: {
@@ -78,7 +79,6 @@ export function CalendarProvider({
   auth: Personnel
   duty_types: DutyType[]
   users: Personnel[]
-  events: DutyException[]
   view?: TCalendarView
   badge?: 'dot' | 'colored'
 }) {
@@ -106,9 +106,6 @@ export function CalendarProvider({
   const [selectedUserId, setSelectedUserId] = useState<Personnel['id'] | 'all'>('all')
   const [selectedTypes, setSelectedTypes] = useState<DutyExceptionsType['id'][]>([])
 
-  const [allEvents, setAllEvents] = useState<DutyException[]>(events || [])
-  const [filteredEvents, setFilteredEvents] = useState<DutyException[]>(events || [])
-
   const updateSettings = (newPartialSettings: Partial<CalendarSettings>) => {
     setSettings((prev) => ({
       ...prev,
@@ -116,10 +113,31 @@ export function CalendarProvider({
     }))
   }
 
+  const [allEvents, setAllEvents] = useState<DutyException[]>([])
+  const [filteredEvents, setFilteredEvents] = useState<DutyException[]>([])
   useEffect(() => {
-    setAllEvents(events)
-    setFilteredEvents(events)
-  }, [events])
+    const fetchEventsByDate = async () => {
+      try {
+        // selectedDate'a göre startDate ve endDate belirle
+        const startDate = new Date(selectedDate)
+        startDate.setHours(0, 0, 0, 0)
+
+        const endDate = new Date(selectedDate)
+        endDate.setHours(23, 59, 59, 999)
+
+        // getAllDutyExceptions fonksiyonunu çağır
+        const exceptions = await getAllDutyExceptions(2, selectedDate)
+        setAllEvents(exceptions)
+        setFilteredEvents(exceptions)
+      } catch (error) {
+        toast.error(String(error))
+        // İsteğe bağlı: kullanıcıya gösterilecek bir hata state'i de tutabilirsiniz
+        // setError(error)
+      }
+    }
+
+    fetchEventsByDate()
+  }, [selectedDate]) // auth.group.id de bağımlılık olarak // auth.group.id de bağımlılık olarak
 
   const setBadgeVariant = (variant: 'dot' | 'colored') => {
     setBadgeVariantState(variant)
@@ -191,8 +209,7 @@ export function CalendarProvider({
       toast.success('Mazeret eklendi')
       return duty_exceptions
     } catch (error) {
-      toast.error('Mazeret eklenirken bir hata oluştu')
-      console.error('Add event error:', error)
+      toast.error(String(error))
       throw error
     }
   }
@@ -205,8 +222,7 @@ export function CalendarProvider({
       toast.success('Mazeret güncellendi')
       return updated
     } catch (error) {
-      toast.error('Mazeret güncellenirken bir hata oluştu')
-      console.error('Update event error:', error)
+      toast.error(String(error))
       throw error
     }
   }
@@ -219,16 +235,17 @@ export function CalendarProvider({
     setFilteredEvents((prev) => prev.filter((e) => e.id !== eventId))
 
     try {
-      const data = await removeDutyException({ id: eventId })
-      if (data?.id === eventId) {
-        toast.warning('Mazeret silindi')
-      }
+      toast.promise(removeDutyException({ id: eventId }), {
+        success: 'Mazeret Silindi',
+        loading: 'Mazeret Siliniyor',
+        error: 'Mazeret Silinemedi',
+      })
+
       return
     } catch (error) {
       setAllEvents(previousAll)
       setFilteredEvents(previousFiltered)
       toast.error('Silme işlemi başarısız')
-      console.error('Remove event error:', error)
       throw error
     }
   }

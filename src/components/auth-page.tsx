@@ -7,7 +7,7 @@ import { formSchema, LoginFormValues } from 'types/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import FormInput from '@/components/form-input'
-import { loginAction } from 'actions/auth'
+import { loginAction } from '@/collections/Personnel/actions/auth'
 import { useForm } from 'react-hook-form'
 
 export function AuthPage() {

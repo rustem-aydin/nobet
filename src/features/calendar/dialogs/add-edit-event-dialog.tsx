@@ -238,7 +238,7 @@ export function AddEditEventDialog({ children, startDate, startTime, event }: IP
             </Button>
           </DialogClose>
           <Button form="event-form" type="submit">
-            {isEditing ? 'Değişiklikleri Kaydet' : 'Etkinlik Oluştur'}
+            {isEditing ? 'Değişiklikleri Kaydet' : 'Mazeret Oluştur'}
           </Button>
         </DialogFooter>
       </DialogContent>

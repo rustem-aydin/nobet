@@ -1,4 +1,3 @@
-// components/app-sidebar.tsx
 'use client'
 
 import * as React from 'react'
@@ -11,7 +10,14 @@ import {
   SidebarHeader,
   SidebarRail,
 } from '@/components/ui/sidebar'
-import { TerminalSquareIcon, FrameIcon, Calendar, Table } from 'lucide-react'
+import {
+  TerminalSquareIcon,
+  FrameIcon,
+  Table,
+  Calendar1,
+  CalendarCheck,
+  CalendarSearch,
+} from 'lucide-react'
 import { Group, Personnel } from '@/payload-types'
 import { NavMenu } from './nav-main'
 
@@ -32,12 +38,17 @@ const data = {
     {
       name: 'Takvim',
       url: '/calendar',
-      icon: <Calendar />,
+      icon: <Calendar1 />,
     },
     {
       name: 'Mazeretler',
       url: '/exceptions',
-      icon: <FrameIcon />,
+      icon: <CalendarCheck />,
+    },
+    {
+      name: 'Nöbet Tarihleri',
+      url: '/dates',
+      icon: <CalendarSearch />,
     },
   ],
   others: [

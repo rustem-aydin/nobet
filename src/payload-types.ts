@@ -68,29 +68,37 @@ export interface Config {
   blocks: {};
   collections: {
     personnel: Personnel;
-    media: Media;
     groups: Group;
     duty_types: DutyType;
     duty_schedule: DutySchedule;
     duty_exceptions: DutyException;
     duty_exceptions_types: DutyExceptionsType;
     duty_swap_requests: DutySwapRequest;
+    personnel_duty_counts: PersonnelDutyCount;
     'payload-kv': PayloadKv;
+    'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    personnel: {
+      counts: 'personnel_duty_counts';
+      exceptions: 'duty_exceptions';
+      schedule: 'duty_schedule';
+    };
+  };
   collectionsSelect: {
     personnel: PersonnelSelect<false> | PersonnelSelect<true>;
-    media: MediaSelect<false> | MediaSelect<true>;
     groups: GroupsSelect<false> | GroupsSelect<true>;
     duty_types: DutyTypesSelect<false> | DutyTypesSelect<true>;
     duty_schedule: DutyScheduleSelect<false> | DutyScheduleSelect<true>;
     duty_exceptions: DutyExceptionsSelect<false> | DutyExceptionsSelect<true>;
     duty_exceptions_types: DutyExceptionsTypesSelect<false> | DutyExceptionsTypesSelect<true>;
     duty_swap_requests: DutySwapRequestsSelect<false> | DutySwapRequestsSelect<true>;
+    personnel_duty_counts: PersonnelDutyCountsSelect<false> | PersonnelDutyCountsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
+    'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -99,15 +107,25 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'payload-jobs-stats': PayloadJobsStat;
+  };
+  globalsSelect: {
+    'payload-jobs-stats': PayloadJobsStatsSelect<false> | PayloadJobsStatsSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
   };
   user: Personnel;
   jobs: {
-    tasks: unknown;
+    tasks: {
+      completeDailyDuties: TaskCompleteDailyDuties;
+      inline: {
+        input: unknown;
+        output: unknown;
+      };
+    };
     workflows: unknown;
   };
 }
@@ -141,6 +159,31 @@ export interface Personnel {
    */
   rank?: number | null;
   group?: (number | null) | Group;
+  aktif?: boolean | null;
+  /**
+   * Bu personeli nöbet saysıları.
+   */
+  counts?: {
+    docs?: (number | PersonnelDutyCount)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  /**
+   * Bu personeli ait mazeretler.
+   */
+  exceptions?: {
+    docs?: (number | DutyException)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  /**
+   * Bu personeli nöbet saysıları.
+   */
+  schedule?: {
+    docs?: (number | DutySchedule)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   role?: ('admin' | 'chief' | 'member') | null;
   updatedAt: string;
   createdAt: string;
@@ -182,22 +225,15 @@ export interface Group {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
+ * via the `definition` "personnel_duty_counts".
  */
-export interface Media {
+export interface PersonnelDutyCount {
   id: number;
-  alt: string;
+  personnel: number | Personnel;
+  dutyType: number | DutyType;
+  count?: number | null;
   updatedAt: string;
   createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -206,26 +242,12 @@ export interface Media {
 export interface DutyType {
   id: number;
   name: string;
+  group?: (number | null) | Group;
   /**
    * Her yıl için ayrı cron tanımları
    */
   yearConfigs: {
-    year:
-      | '2026'
-      | '2027'
-      | '2028'
-      | '2029'
-      | '2030'
-      | '2031'
-      | '2032'
-      | '2033'
-      | '2034'
-      | '2035'
-      | '2036'
-      | '2037'
-      | '2038'
-      | '2039'
-      | '2040';
+    year: number;
     cronSchedules: {
       cron: string;
       description: string;
@@ -245,62 +267,6 @@ export interface DutyType {
    */
   color: string;
   isActive?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "duty_schedule".
- */
-export interface DutySchedule {
-  id: number;
-  swapRequest?: (number | null) | DutySwapRequest;
-  swapHistory?:
-    | {
-        date: string;
-        fromPersonnel: number | Personnel;
-        toPersonnel: number | Personnel;
-        type: 'mutual' | 'unilateral';
-        id?: string | null;
-      }[]
-    | null;
-  personnel: number | Personnel;
-  dutyType: number | DutyType;
-  dutyDate: string;
-  status: 'scheduled' | 'completed' | 'cancelled' | 'swapped' | 'exception';
-  exceptionType?: ('official' | 'unofficial') | null;
-  /**
-   * Sarı mazeret sonrası bir sonraki ay öncelikli
-   */
-  isPriority?: boolean | null;
-  /**
-   * Değişim varsa asıl nöbetçi
-   */
-  originalPersonnel?: (number | null) | Personnel;
-  notes?: string | null;
-  group: number | Group;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "duty_swap_requests".
- */
-export interface DutySwapRequest {
-  id: number;
-  requesterPersonnel: number | Personnel;
-  requesterDuty: number | DutySchedule;
-  type: 'mutual' | 'unilateral';
-  targetPersonnel?: (number | null) | Personnel;
-  targetDuty?: (number | null) | DutySchedule;
-  /**
-   * Karşılıksız değişimde asıl nöbetçinin mazeret tipi
-   */
-  excuseType?: ('official' | 'unofficial') | null;
-  status: 'pending' | 'approved' | 'rejected';
-  approvedBy?: (number | null) | Personnel;
-  approvedAt?: string | null;
-  notes?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -336,6 +302,40 @@ export interface DutyExceptionsType {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "duty_schedule".
+ */
+export interface DutySchedule {
+  id: number;
+  swapRequest?: (number | null) | DutySwapRequest;
+  personnel: number | Personnel;
+  dutyType: number | DutyType;
+  dutyDate: string;
+  status: 'draft' | 'scheduled' | 'completed';
+  isOffical?: boolean | null;
+  group: number | Group;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "duty_swap_requests".
+ */
+export interface DutySwapRequest {
+  id: number;
+  requesterPersonnel: number | Personnel;
+  requesterDuty: number | DutySchedule;
+  type: 'mutual' | 'unilateral';
+  targetPersonnel?: (number | null) | Personnel;
+  targetDuty?: (number | null) | DutySchedule;
+  status: 'pending' | 'approved' | 'rejected';
+  approvedBy?: (number | null) | Personnel;
+  approvedAt?: string | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -353,6 +353,107 @@ export interface PayloadKv {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs".
+ */
+export interface PayloadJob {
+  id: number;
+  /**
+   * Input data provided to the job
+   */
+  input?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  taskStatus?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  completedAt?: string | null;
+  totalTried?: number | null;
+  /**
+   * If hasError is true this job will not be retried
+   */
+  hasError?: boolean | null;
+  /**
+   * If hasError is true, this is the error that caused it
+   */
+  error?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Task execution log
+   */
+  log?:
+    | {
+        executedAt: string;
+        completedAt: string;
+        taskSlug: 'inline' | 'completeDailyDuties';
+        taskID: string;
+        input?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        output?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        state: 'failed' | 'succeeded';
+        error?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  taskSlug?: ('inline' | 'completeDailyDuties') | null;
+  queue?: string | null;
+  waitUntil?: string | null;
+  processing?: boolean | null;
+  meta?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -361,10 +462,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'personnel';
         value: number | Personnel;
-      } | null)
-    | ({
-        relationTo: 'media';
-        value: number | Media;
       } | null)
     | ({
         relationTo: 'groups';
@@ -389,6 +486,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'duty_swap_requests';
         value: number | DutySwapRequest;
+      } | null)
+    | ({
+        relationTo: 'personnel_duty_counts';
+        value: number | PersonnelDutyCount;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -440,6 +541,10 @@ export interface PersonnelSelect<T extends boolean = true> {
   fullName?: T;
   rank?: T;
   group?: T;
+  aktif?: T;
+  counts?: T;
+  exceptions?: T;
+  schedule?: T;
   role?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -460,24 +565,6 @@ export interface PersonnelSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media_select".
- */
-export interface MediaSelect<T extends boolean = true> {
-  alt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "groups_select".
  */
 export interface GroupsSelect<T extends boolean = true> {
@@ -494,6 +581,7 @@ export interface GroupsSelect<T extends boolean = true> {
  */
 export interface DutyTypesSelect<T extends boolean = true> {
   name?: T;
+  group?: T;
   yearConfigs?:
     | T
     | {
@@ -522,23 +610,11 @@ export interface DutyTypesSelect<T extends boolean = true> {
  */
 export interface DutyScheduleSelect<T extends boolean = true> {
   swapRequest?: T;
-  swapHistory?:
-    | T
-    | {
-        date?: T;
-        fromPersonnel?: T;
-        toPersonnel?: T;
-        type?: T;
-        id?: T;
-      };
   personnel?: T;
   dutyType?: T;
   dutyDate?: T;
   status?: T;
-  exceptionType?: T;
-  isPriority?: T;
-  originalPersonnel?: T;
-  notes?: T;
+  isOffical?: T;
   group?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -578,11 +654,21 @@ export interface DutySwapRequestsSelect<T extends boolean = true> {
   type?: T;
   targetPersonnel?: T;
   targetDuty?: T;
-  excuseType?: T;
   status?: T;
   approvedBy?: T;
   approvedAt?: T;
   notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "personnel_duty_counts_select".
+ */
+export interface PersonnelDutyCountsSelect<T extends boolean = true> {
+  personnel?: T;
+  dutyType?: T;
+  count?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -593,6 +679,38 @@ export interface DutySwapRequestsSelect<T extends boolean = true> {
 export interface PayloadKvSelect<T extends boolean = true> {
   key?: T;
   data?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs_select".
+ */
+export interface PayloadJobsSelect<T extends boolean = true> {
+  input?: T;
+  taskStatus?: T;
+  completedAt?: T;
+  totalTried?: T;
+  hasError?: T;
+  error?: T;
+  log?:
+    | T
+    | {
+        executedAt?: T;
+        completedAt?: T;
+        taskSlug?: T;
+        taskID?: T;
+        input?: T;
+        output?: T;
+        state?: T;
+        error?: T;
+        id?: T;
+      };
+  taskSlug?: T;
+  queue?: T;
+  waitUntil?: T;
+  processing?: T;
+  meta?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -628,6 +746,34 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs-stats".
+ */
+export interface PayloadJobsStat {
+  id: number;
+  stats?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs-stats_select".
+ */
+export interface PayloadJobsStatsSelect<T extends boolean = true> {
+  stats?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "collections_widget".
  */
 export interface CollectionsWidget {
@@ -635,6 +781,14 @@ export interface CollectionsWidget {
     [k: string]: unknown;
   };
   width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskCompleteDailyDuties".
+ */
+export interface TaskCompleteDailyDuties {
+  input?: unknown;
+  output?: unknown;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

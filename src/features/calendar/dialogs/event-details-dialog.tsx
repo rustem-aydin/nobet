@@ -19,7 +19,6 @@ import { AddEditEventDialog } from '@/features/calendar/dialogs/add-edit-event-d
 import { DutyException, DutyExceptionsType, Personnel } from '@/payload-types'
 import { Badge } from '@/components/ui/badge'
 import { DutyStatus } from '../views/month-view/duty_status'
-import { useDisclosure } from '../hooks'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,16 +45,20 @@ export function EventDetailsDialog({ event, children }: IProps) {
   const endDate = parseISO(event.endDate)
   const { removeEvent, auth, updateEvent } = useCalendar()
 
-  const isAdmin = auth.role === 'admin' // veya auth.isAdmin
+  const isAdmin = auth.role === 'admin'
+  const isChief = auth.role === 'chief'
+  const isApprover = isAdmin || isChief
   const isOwner = (event.personnel as Personnel).email === auth.email
   const isApproved = event.status === 'approved'
+  const isPending = event.status === 'pending'
 
-  const canReject = isAdmin && !isOwner
+  // Onaylama/Reddetme yetkisi: admin veya kıdemli VE kendi talebi değil VE beklemede
+  const canApproveOrReject = isApprover && !isOwner && isPending
 
-  const canApprove = true
+  // Düzenleme yetkisi: sahibi VE onaylanmamış
+  const canEdit = isOwner && !isApproved
 
-  const canEdit = !isApproved && isOwner
-
+  // Silme yetkisi: sahibi
   const canDelete = isOwner
 
   const deleteEvent = async (eventId: number) => {
@@ -162,8 +165,8 @@ export function EventDetailsDialog({ event, children }: IProps) {
           </ScrollArea>
 
           <div className="flex flex-wrap justify-end gap-2">
-            {/* Onayla - Herkes için */}
-            {canApprove && !isApproved && (
+            {/* Onayla - admin veya kıdemli, kendi talebi değil, beklemede */}
+            {canApproveOrReject && (
               <AlertDialog open={isApproveOpen} onOpenChange={setIsApproveOpen}>
                 <AlertDialogTrigger asChild>
                   <Button variant="default" className="bg-green-600 hover:bg-green-700">
@@ -186,8 +189,8 @@ export function EventDetailsDialog({ event, children }: IProps) {
               </AlertDialog>
             )}
 
-            {/* Reddet - Sadece admin ve kendi oluşturmadığı */}
-            {canReject && !isApproved && (
+            {/* Reddet - admin veya kıdemli, kendi talebi değil, beklemede */}
+            {canApproveOrReject && (
               <AlertDialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive">
@@ -212,14 +215,14 @@ export function EventDetailsDialog({ event, children }: IProps) {
               </AlertDialog>
             )}
 
-            {/* Düzenle - Approved değilse ve owner ise */}
+            {/* Düzenle - sahibi ve onaylanmamış */}
             {canEdit && (
               <AddEditEventDialog event={event}>
                 <Button variant="outline">Düzenle</Button>
               </AddEditEventDialog>
             )}
 
-            {/* Sil - Owner ise */}
+            {/* Sil - sahibi */}
             {canDelete && (
               <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
                 <AlertDialogTrigger asChild>

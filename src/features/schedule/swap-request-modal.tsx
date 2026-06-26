@@ -1,15 +1,9 @@
-// features/schedule/components/swap-request-modal.tsx
 'use client'
 
 import { useState } from 'react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -17,102 +11,103 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { format } from 'date-fns'
+import { tr } from 'date-fns/locale'
+import { DutySchedule, Personnel } from '@/payload-types'
+import { useSchedule } from './contexts/schedule-context'
 
 interface Props {
-  personnelId: number
-  personnelName: string
-  dutyTypeId: string
-  date: string
-  onClose: () => void
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  date: Date
+  dutyRecord: DutySchedule
+  assignedPerson: Personnel
+  swapType: 'mutual' | 'unilateral'
+  auth: any
 }
 
-export function SwapRequestModal({ personnelId, personnelName, dutyTypeId, date, onClose }: Props) {
-  const [swapType, setSwapType] = useState<'mutual' | 'unilateral'>('mutual')
-  const [targetPersonnel, setTargetPersonnel] = useState('')
-  const [excuseType, setExcuseType] = useState<'official' | 'unofficial'>('unofficial')
+export function SwapRequestModal({
+  open,
+  onOpenChange,
+  date,
+  dutyRecord,
+  assignedPerson,
+  swapType,
+  auth,
+}: Props) {
+  const { personnels, handleSwap } = useSchedule()
+  const [targetPerson, setTargetPerson] = useState<number>(auth.id)
+  const [requesterDuty, setRequesterDuty] = useState<number>(dutyRecord.id)
+  const [loading, setLoading] = useState(false)
+
+  const isChief = auth?.role === 'admin' || auth?.role === 'chief'
+  const otherPersonnels = personnels.filter((p) => p.id !== assignedPerson?.id)
 
   const handleSubmit = async () => {
-    // API çağrısı
-    console.log({
-      requesterPersonnel: personnelId,
-      requesterDuty: date,
-      type: swapType,
-      targetPersonnel: swapType === 'mutual' ? targetPersonnel : null,
-      excuseType: swapType === 'unilateral' ? excuseType : null,
-    })
-    onClose()
+    setLoading(true)
+    try {
+      await handleSwap({
+        requesterPersonnel: targetPerson,
+        requesterDuty: requesterDuty,
+        status: 'pending',
+        type: swapType,
+        targetPersonnel: assignedPerson.id,
+        targetDuty: dutyRecord.id,
+      })
+      onOpenChange(false)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Değişim Talebi</DialogTitle>
+          <DialogTitle>
+            {swapType === 'mutual' ? 'Karşılıklı Değişim' : 'Karşılıksız Değişim'}
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="text-sm text-muted-foreground">
-            <strong>{personnelName}</strong> - {new Date(date).toLocaleDateString('tr-TR')}
+        <div className="space-y-4 py-4">
+          <div>
+            <Label className="text-muted-foreground">Tarih</Label>
+            <p className="font-medium">{format(date, 'dd MMMM yyyy', { locale: tr })}</p>
           </div>
 
-          <RadioGroup
-            value={swapType}
-            onValueChange={(v: any) => setSwapType(v as 'mutual' | 'unilateral')}
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="mutual" id="mutual" />
-              <Label htmlFor="mutual">Karşılıklı Değişim</Label>
+          {assignedPerson && (
+            <div>
+              <Label className="text-muted-foreground">Mevcut Nöbetli</Label>
+              <p className="font-medium">{assignedPerson.fullName}</p>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="unilateral" id="unilateral" />
-              <Label htmlFor="unilateral">Karşılıksız Değişim</Label>
+          )}
+          {!isChief && (
+            <div>
+              <Label className="text-muted-foreground">Talep Eden</Label>
+              <p className="font-medium">{auth.fullName}</p>
             </div>
-          </RadioGroup>
-
-          {swapType === 'mutual' && (
-            <div className="grid gap-2">
-              <Label>Karşı Taraf Personel</Label>
-              <Select value={targetPersonnel} onValueChange={setTargetPersonnel}>
+          )}
+          {isChief && (
+            <div>
+              <Label>Hedef Personel</Label>
+              <Select value={String(targetPerson)} onValueChange={(e: any) => setTargetPerson(e)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Personel seçin" />
                 </SelectTrigger>
                 <SelectContent>
-                  {/* Personel listesi */}
-                  <SelectItem value="1">Mehmet</SelectItem>
-                  <SelectItem value="2">Ayşe</SelectItem>
+                  {otherPersonnels.map((p) => (
+                    <SelectItem key={p.id} value={p.id.toString()}>
+                      {p.fullName} (Rank: {p.rank})
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           )}
-
-          {swapType === 'unilateral' && (
-            <div className="grid gap-2">
-              <Label>Mazeret Türü</Label>
-              <RadioGroup
-                value={excuseType}
-                onValueChange={(v: any) => setExcuseType(v as 'official' | 'unofficial')}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="official" id="official" />
-                  <Label htmlFor="official">Resmi (Gri)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="unofficial" id="unofficial" />
-                  <Label htmlFor="unofficial">Resmi Olmayan (Sarı)</Label>
-                </div>
-              </RadioGroup>
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            İptal
+          <Button className="w-full" onClick={handleSubmit} disabled={loading || !targetPerson}>
+            {loading ? 'Gönderiliyor...' : 'Talep Gönder'}
           </Button>
-          <Button onClick={handleSubmit}>Talep Gönder</Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   )

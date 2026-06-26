@@ -21,7 +21,6 @@ export function CalendarBody() {
     const endDate = parseISO(event.endDate)
     return !isSameDay(startDate, endDate)
   })
-  console.log(events)
   return (
     <div className="w-full h-full overflow-scroll relative">
       <motion.div

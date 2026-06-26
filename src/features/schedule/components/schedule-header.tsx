@@ -1,12 +1,12 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { RefreshCw } from 'lucide-react'
+import { Calendar, CheckCheck, Trash2Icon, FileText, User, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { slideFromLeft, slideFromRight, transition } from '@/features/calendar/animations'
 import { useSchedule } from '../contexts/schedule-context'
 import { ScheduleDateNavigator } from './schedule-date-navigator'
-import { TodayButton } from '@/features/calendar/header/today-button'
 import {
   Select,
   SelectContent,
@@ -14,30 +14,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { generateSchedule } from 'actions/duty_schedule'
-import { useState } from 'react'
 import { ScheduleTodayButton } from './ScheduleTodayButton'
+import ConfirmDialog from '@/components/confirm-dialog'
+import { InteractiveLogsTable } from '@/components/interactiveLogsTable'
+import { getPersonnelIcon } from './personnel-lists'
 
 export function ScheduleHeader() {
-  const { selectedDate, setSelectedDate, selectedDutyType, setSelectedDutyType, duty_types, auth } =
-    useSchedule()
-  const [generating, setGenerating] = useState(false)
+  const {
+    selectedDutyType,
+    selectedPersonnel,
+    setSelectedPersonnel,
+    handleGenerate,
+    logs,
+    setSelectedDutyType,
+    duty_types,
+    auth,
+    personnels,
+    schedules,
+    handleApproved,
+    generating,
+    handleDelete,
+    year,
+    month,
+  } = useSchedule()
 
   const isChief = auth?.role === 'admin' || auth?.role === 'chief'
 
-  const handleGenerate = async () => {
-    setGenerating(true)
-    try {
-      await generateSchedule(selectedDate.getFullYear(), selectedDate.getMonth())
-      window.location.reload()
-    } catch (err) {
-      console.error('Generate hatası:', err)
-    } finally {
-      setGenerating(false)
-    }
-  }
+  const schedulesInMonth = schedules.filter((s) => {
+    const scheduleDate = new Date(s.dutyDate)
+    return scheduleDate.getFullYear() === year && scheduleDate.getMonth() === month
+  })
 
-  const selectValue = selectedDutyType ? String(selectedDutyType.id) : 'all'
+  const hasDraftInMonth = schedulesInMonth.some((s) => s.status === 'draft')
+  const hasCompletedInMonth = schedulesInMonth.some((s) => s.status === 'completed')
+
+  const selectDutyValue = selectedDutyType ? String(selectedDutyType.id) : 'all'
+  const selectPersonValue = selectedPersonnel ? String(selectedPersonnel.id) : 'all'
 
   return (
     <div className="flex flex-col gap-4 border-b p-4 lg:flex-row lg:items-center lg:justify-between">
@@ -49,12 +61,7 @@ export function ScheduleHeader() {
         transition={transition}
       >
         <ScheduleTodayButton />
-        <ScheduleDateNavigator
-          view="month"
-          events={[]}
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-        />
+        <ScheduleDateNavigator view={'month'} />
       </motion.div>
 
       <motion.div
@@ -64,8 +71,9 @@ export function ScheduleHeader() {
         animate="animate"
         transition={transition}
       >
+        {/* Duty Type Filter */}
         <Select
-          value={selectValue}
+          value={selectDutyValue}
           onValueChange={(val) => {
             if (val === 'all') {
               setSelectedDutyType(null)
@@ -81,7 +89,7 @@ export function ScheduleHeader() {
           <SelectContent>
             <SelectItem value="all">
               <div className="flex items-center gap-2">
-                <span className="inline-block w-3 h-3 rounded-full bg-gray-400" />
+                <span className="inline-block h-3 w-3 rounded-full bg-gray-400" />
                 Tüm Nöbetler
               </div>
             </SelectItem>
@@ -89,7 +97,7 @@ export function ScheduleHeader() {
               <SelectItem key={dt.id} value={String(dt.id)}>
                 <div className="flex items-center gap-2">
                   <span
-                    className="inline-block w-3 h-3 rounded-full"
+                    className="inline-block h-3 w-3 rounded-full"
                     style={{ backgroundColor: dt.color || '#888' }}
                   />
                   {dt.name}
@@ -99,11 +107,101 @@ export function ScheduleHeader() {
           </SelectContent>
         </Select>
 
+        {/* Personnel Filter (yeni) */}
+        <Select
+          value={selectPersonValue}
+          onValueChange={(val) => {
+            if (val === 'all') {
+              setSelectedPersonnel(null)
+            } else {
+              const person = personnels.find((p) => String(p.id) === val)
+              if (person) setSelectedPersonnel(person)
+            }
+          }}
+        >
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Tüm Personel" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">
+              <div className="flex items-center gap-2">
+                <Users className="h-3 w-3 text-gray-400" />
+                Tüm Personel
+              </div>
+            </SelectItem>
+            {personnels.map((p) => {
+              // Whitelist/blacklist durumuna göre ikon belirle
+              const Icon = getPersonnelIcon(p.fullName) || User // varsayılan User ikonu
+              return (
+                <SelectItem key={p.id} value={String(p.id)}>
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-3 w-3 text-gray-500" />
+                    {p.fullName}
+                  </div>
+                </SelectItem>
+              )
+            })}
+          </SelectContent>
+        </Select>
+
         {isChief && (
-          <Button variant="outline" onClick={handleGenerate} disabled={generating}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${generating ? 'animate-spin' : ''}`} />
-            {generating ? 'Oluşturuluyor...' : 'Çizelge Oluştur'}
-          </Button>
+          <>
+            {schedulesInMonth.length === 0 ? (
+              <Button variant="outline" onClick={handleGenerate} disabled={generating}>
+                <Calendar className="mr-2 h-4 w-4" />
+                Çizelge Oluştur
+              </Button>
+            ) : hasDraftInMonth ? (
+              <ConfirmDialog
+                title="Tümünü Onayla"
+                description="Bu çizelge kalıcı olarak onaylanacaktır. Emin misiniz?"
+                confirmText="Evet, Onayla"
+                onConfirm={handleApproved}
+              >
+                <Button
+                  variant="secondary"
+                  className="bg-green-500/30 text-green-500 hover:bg-green-500/50"
+                  disabled={generating}
+                >
+                  <CheckCheck className="mr-2 h-4 w-4" />
+                  Çizelgeyi Onayla
+                </Button>
+              </ConfirmDialog>
+            ) : null}
+          </>
+        )}
+
+        {isChief && !hasCompletedInMonth && (
+          <ConfirmDialog
+            title="Çizelgeyi Sil"
+            description="Bu çizelge kalıcı olarak silinecek. Emin misiniz?"
+            confirmText="Evet, sil"
+            onConfirm={handleDelete}
+          >
+            <Button variant="destructive" disabled={generating || schedulesInMonth.length === 0}>
+              <Trash2Icon className="mr-2 h-4 w-4" />
+              Çizelge Sil
+            </Button>
+          </ConfirmDialog>
+        )}
+
+        {logs && logs.length > 0 && (
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="relative">
+                <FileText className="mr-2 h-4 w-4" />
+                Loglar
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                  {logs.length}
+                </span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="min-w-4xl w-full p-0">
+              <div className="h-[calc(100vh-80px)]">
+                <InteractiveLogsTable logs={logs} />
+              </div>
+            </SheetContent>
+          </Sheet>
         )}
       </motion.div>
     </div>

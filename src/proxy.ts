@@ -5,41 +5,41 @@ import type { NextRequest } from 'next/server'
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (pathname.startsWith('/admin/login')) {
-    return NextResponse.next()
-  }
-
+  // API rotalarını atla
   if (pathname.startsWith('/api')) {
     return NextResponse.next()
   }
 
-  // Statik dosyalar (Resim, CSS, JS)
+  // Statik dosyaları atla
   if (pathname.startsWith('/_next') || pathname.startsWith('/static') || pathname.includes('.')) {
     return NextResponse.next()
   }
 
-  // -----------------------------------------------------------
-  // 2. KİLİTLEME MANTIĞI
-  // -----------------------------------------------------------
-
   const token = request.cookies.get('payload-token')?.value
 
-  // Eğer token YOKSA -> Payload'ın Admin Login sayfasına yönlendir
+  // Token YOKSA
   if (!token) {
-    const loginUrl = new URL('/admin/login', request.url)
+    // Zaten login sayfasındaysa kal
+    if (pathname === '/login') {
+      return NextResponse.next()
+    }
 
-    // Kullanıcı giriş yaptıktan sonra asıl gitmek istediği yere dönsün
-    // Payload bu parametreyi genellikle okur ve yönlendirir
+    // Diğer her sayfadan login'e yönlendir
+    const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
-
     return NextResponse.redirect(loginUrl)
   }
 
-  // Token varsa geç
+  // Token VARSA
+  // Login sayfasındaysa ana sayfaya yönlendir (giriş yapmış kişi login'e gitmesin)
+  if (pathname === '/login') {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  // Diğer tüm sayfalara (/, /admin, /dashboard vb.) izin ver
   return NextResponse.next()
 }
 
 export const config = {
-  // Tüm siteyi kapsa
   matcher: '/:path*',
 }

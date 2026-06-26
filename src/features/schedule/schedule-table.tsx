@@ -3,7 +3,6 @@
 
 import { useEffect, useState } from 'react'
 import { DutyType } from '@/payload-types'
-import { getScheduleByDutyType } from 'actions/duty_schedule'
 import {
   DndContext,
   closestCenter,
@@ -19,6 +18,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { ScheduleRow } from './schedule-row'
+import { getScheduleByDutyType } from '@/collections/DutySchedule/actions/getScheduleByDutyType'
 
 interface Props {
   dutyType: DutyType

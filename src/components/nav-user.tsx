@@ -8,7 +8,7 @@ import { Personnel } from '@/payload-types'
 import { useThemeToggle } from './theme-toggle'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { logoutAction } from 'actions/auth'
+import { logoutAction } from '@/collections/Personnel/actions/auth'
 
 interface NavUserProps {
   personnel: Personnel | null

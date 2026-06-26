@@ -1,5 +1,5 @@
 // src/features/schedule/components/schedule-table-cell.tsx
-import { format, getMonth, getDate } from 'date-fns'
+import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 
@@ -37,8 +37,8 @@ export function ScheduleTableCell({ items, dutyTypeColor }: Props) {
   return (
     <div className="flex flex-col gap-0.5">
       {items.map((item, idx) => {
-        const day = getDate(item.date)
-        const month = MONTH_ABBR[getMonth(item.date)]
+        const day = item.date.getUTCDate()
+        const month = MONTH_ABBR[item.date.getUTCMonth()]
 
         // Renk kuralı (kırmızı yazı yoksay, sadece mazeret):
         const isException = item.status === 'exception'
