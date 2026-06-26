@@ -33,17 +33,10 @@ export function CalendarMonthView({ singleDayEvents, multiDayEvents }: IProps) {
 
   // YILA GÖRE duty_types filtrele ve cache'le
   const dutyTypesWithDates = useMemo(() => {
-    // Sadece aktif yılın config'i olanları al
-    const filteredByYear = duty_types
-      .map((dt) => ({
-        ...dt,
-        yearConfigs:
-          dt.yearConfigs?.filter((yc) => yc.year === year.toString() && yc.isActive) || [],
-      }))
-      .filter((dt) => dt.yearConfigs.length > 0)
+    const filteredByYear = duty_types.filter((dt) => dt.year === year && dt.isActive)
 
     return expandDutyTypesToDates(filteredByYear, year)
-  }, [duty_types, year]) // duty_types değişince yeniden hesapla
+  }, [duty_types, year])
 
   // Hücreleri nöbet türleriyle eşleştir
   const cellDutyTypes = useMemo(() => {

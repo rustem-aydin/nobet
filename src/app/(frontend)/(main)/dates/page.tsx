@@ -40,20 +40,15 @@ export default async function DatesPage({
               </AccordionTrigger>
               <AccordionContent>
                 <div className="space-y-4 ">
-                  {type.yearConfigs?.flatMap(
-                    (yearConfig) =>
-                      yearConfig.cronSchedules?.map((schedule) => (
-                        <>
-                          <CronSchedule
-                            color={type.color}
-                            key={`${type.id}-${yearConfig.id}-${schedule.id}`}
-                            showNextRuns={3}
-                            expression={schedule.cron}
-                            title={schedule.description}
-                          />
-                        </>
-                      )) ?? [],
-                  ) ?? (
+                  {type.cronSchedules?.map((schedule) => (
+                    <CronSchedule
+                      color={type.color}
+                      key={type.id}
+                      showNextRuns={3}
+                      expression={schedule.cron}
+                      title={schedule.description}
+                    />
+                  )) ?? (
                     <p className="text-muted-foreground text-sm">Planlanmış nöbet bulunmuyor.</p>
                   )}
                 </div>

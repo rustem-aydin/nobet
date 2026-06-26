@@ -31,50 +31,34 @@ export const DutyTypes: CollectionConfig = {
       relationTo: 'groups',
       label: 'Nöbet Grubu',
     },
+    {
+      name: 'year',
+      type: 'number',
+      required: true,
+      label: 'Yıl',
+    },
 
     {
-      name: 'yearConfigs',
+      name: 'cronSchedules',
       type: 'array',
       required: true,
-      label: 'Yıllık Konfigürasyonlar',
-      admin: {
-        description: 'Her yıl için ayrı cron tanımları',
-      },
+      label: 'Cron Schedule Tanımları',
       fields: [
         {
-          name: 'year',
-          type: 'number',
+          name: 'cron',
+          type: 'text',
           required: true,
-          label: 'Yıl',
+          label: 'Cron İfadesi',
         },
         {
-          name: 'cronSchedules',
-          type: 'array',
+          name: 'description',
+          type: 'text',
           required: true,
-          label: 'Cron Schedule Tanımları',
-          fields: [
-            {
-              name: 'cron',
-              type: 'text',
-              required: true,
-              label: 'Cron İfadesi',
-            },
-            {
-              name: 'description',
-              type: 'text',
-              required: true,
-              label: 'Açıklama',
-            },
-          ],
-        },
-        {
-          name: 'isActive',
-          type: 'checkbox',
-          defaultValue: true,
-          label: 'Aktif',
+          label: 'Açıklama',
         },
       ],
     },
+
     {
       name: 'priority',
       type: 'number',

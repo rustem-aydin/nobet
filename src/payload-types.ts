@@ -243,17 +243,10 @@ export interface DutyType {
   id: number;
   name: string;
   group?: (number | null) | Group;
-  /**
-   * Her yıl için ayrı cron tanımları
-   */
-  yearConfigs: {
-    year: number;
-    cronSchedules: {
-      cron: string;
-      description: string;
-      id?: string | null;
-    }[];
-    isActive?: boolean | null;
+  year: number;
+  cronSchedules: {
+    cron: string;
+    description: string;
     id?: string | null;
   }[];
   /**
@@ -582,18 +575,12 @@ export interface GroupsSelect<T extends boolean = true> {
 export interface DutyTypesSelect<T extends boolean = true> {
   name?: T;
   group?: T;
-  yearConfigs?:
+  year?: T;
+  cronSchedules?:
     | T
     | {
-        year?: T;
-        cronSchedules?:
-          | T
-          | {
-              cron?: T;
-              description?: T;
-              id?: T;
-            };
-        isActive?: T;
+        cron?: T;
+        description?: T;
         id?: T;
       };
   priority?: T;
