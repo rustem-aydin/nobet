@@ -20,7 +20,6 @@ export const getNobetdasPersonnels = async ({
       },
     },
   })
-  console.log(duty)
 
   return duty.docs
 }

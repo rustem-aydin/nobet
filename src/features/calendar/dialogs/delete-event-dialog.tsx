@@ -42,7 +42,7 @@ export default function DeleteEventDialog({ eventId }: DeleteEventDialogProps) {
         <AlertDialogHeader>
           <AlertDialogTitle>Emin misiniz?</AlertDialogTitle>
           <AlertDialogDescription>
-            Bu işlem geri alınamaz. Bu etkinlik kalıcı olarak silinecek ve sunucularımızdan etkinlik
+            Bu işlem geri alınamaz. Bu mazeret kalıcı olarak silinecek ve sunucularımızdan etkinlik
             verileri kaldırılacaktır.
           </AlertDialogDescription>
         </AlertDialogHeader>

@@ -52,43 +52,43 @@ export async function AddDutyExceptions(values: AddDutyExceptionsFormValues) {
       overrideAccess: false,
     })
     const formatDate = (date: Date) => format(date, 'd MMMM', { locale: tr })
-    if (formatDate(new Date(values.startDate)) === formatDate(new Date(values.endDate))) {
-      const email = await payload.sendEmail({
-        to: 'rustema@hvkk.tsk.tr',
-        // to: ((auth.group as Group).chief as Personnel).email,
-        subject: 'Nöbet Mazeretleri',
-        html: getEmail({
-          title: `Değerli ${String(((auth?.group as Group).chief as Personnel).fullName)}`,
-          buttonTitle: 'Mazeretleri Gör',
-          buttonURL: `${process.env.PUBLIC_URL}`,
-          date: `${formatDate(new Date(values.startDate))}`,
-          datetitle: 'Mazeret Tarihi',
-          description: `${auth.fullName} ${formatDate(new Date(values.startDate))} tarihinde <b>${(exceptions.exceptions_type as DutyExceptionsType).name}</b> sebebiyle mazaret talebinde bulunmuştur. Açıklama;</br></br>
-        ${values.reason}
-        `,
-        }),
-      })
-    } else {
-      const email = await payload.sendEmail({
-        to: 'rustema@hvkk.tsk.tr',
-        // to: ((auth.group as Group).chief as Personnel).email,
-        subject: 'Nöbet Mazeretleri',
-        html: getEmail({
-          title: `Değerli ${String(((auth?.group as Group).chief as Personnel).fullName)}`,
-          buttonTitle: 'Mazeretleri Gör',
-          buttonURL: `${process.env.PUBLIC_URL}`,
-          date: `${formatDate(new Date(values.startDate))}-${formatDate(new Date(values.endDate))}`,
-          datetitle: 'Başlanğıç ve Bitiş Tarihi',
-          description: `${auth.fullName} ${formatDate(new Date(values.startDate))}-${formatDate(new Date(values.endDate))} tarihleri arasında <b>${(exceptions.exceptions_type as DutyExceptionsType).name}</b> sebebiyle mazaret talebinde bulunmuştur. Açıklama;</br></br>
-        ${values.reason}
-        `,
-        }),
-      })
-    }
+    // if (formatDate(new Date(values.startDate)) === formatDate(new Date(values.endDate))) {
+    //   const email = await payload.sendEmail({
+    //     to: 'rustema@hvkk.tsk.tr',
+    //     // to: ((auth.group as Group).chief as Personnel).email,
+    //     subject: 'Nöbet Mazeretleri',
+    //     html: getEmail({
+    //       title: `Değerli ${String(((auth?.group as Group).chief as Personnel).fullName)}`,
+    //       buttonTitle: 'Mazeretleri Gör',
+    //       buttonURL: `${process.env.PUBLIC_URL}`,
+    //       date: `${formatDate(new Date(values.startDate))}`,
+    //       datetitle: 'Mazeret Tarihi',
+    //       description: `${auth.fullName} ${formatDate(new Date(values.startDate))} tarihinde <b>${(exceptions.exceptions_type as DutyExceptionsType).name}</b> sebebiyle mazaret talebinde bulunmuştur. Açıklama;</br></br>
+    //     ${values.reason}
+    //     `,
+    //     }),
+    //   })
+    // } else {
+    //   const email = await payload.sendEmail({
+    //     to: 'rustema@hvkk.tsk.tr',
+    //     // to: ((auth.group as Group).chief as Personnel).email,
+    //     subject: 'Nöbet Mazeretleri',
+    //     html: getEmail({
+    //       title: `Değerli ${String(((auth?.group as Group).chief as Personnel).fullName)}`,
+    //       buttonTitle: 'Mazeretleri Gör',
+    //       buttonURL: `${process.env.PUBLIC_URL}`,
+    //       date: `${formatDate(new Date(values.startDate))}-${formatDate(new Date(values.endDate))}`,
+    //       datetitle: 'Başlanğıç ve Bitiş Tarihi',
+    //       description: `${auth.fullName} ${formatDate(new Date(values.startDate))}-${formatDate(new Date(values.endDate))} tarihleri arasında <b>${(exceptions.exceptions_type as DutyExceptionsType).name}</b> sebebiyle mazaret talebinde bulunmuştur. Açıklama;</br></br>
+    //     ${values.reason}
+    //     `,
+    //     }),
+    //   })
+    // }
     revalidatePath('/exceptions')
     return exceptions
   } catch (error) {
-    throw new Error('Hata eklenemedi')
+    throw new Error(String(error))
   }
 }
 
@@ -119,41 +119,41 @@ export async function updateDutyException({
   })
   const formatDate = (date: Date) => format(date, 'd MMMM', { locale: tr })
 
-  if (values.status === 'approved' || values.status === 'rejected') {
-    if (formatDate(new Date(data.startDate)) === formatDate(new Date(data.endDate))) {
-      const email = await payload.sendEmail({
-        to: 'rustema@hvkk.tsk.tr',
-        // to: ((auth.group as Group).chief as Personnel).email,
-        subject: 'Nöbet Mazeretleri',
-        html: getEmail({
-          title: `Değerli ${(data?.personnel as Personnel).fullName}`,
-          buttonTitle: 'Mazeretleri Gör',
-          buttonURL: `${process.env.PUBLIC_URL}`,
-          date: `${formatDate(new Date(data.startDate))}`,
-          datetitle: 'Mazeret Tarihi',
-          description: `${formatDate(new Date(data.startDate))} tarihinde <b>${(data.exceptions_type as DutyExceptionsType).name}</b> sebebiyle mazaret talebinde bulunmuştunuz.Mazeretiniz ${values.status === 'approved' ? '<b style="color: green">onaylanmıştır.</b>' : '<b style="color: red">reddedilmiştir.</b> Nöbet kıdemliniz ile iletişime geçiniz.'}. Açıklama;</br></br>
-        ${values.reason}
-        `,
-        }),
-      })
-    } else {
-      const email = await payload.sendEmail({
-        to: 'rustema@hvkk.tsk.tr',
-        // to: ((auth.group as Group).chief as Personnel).email,
-        subject: 'Nöbet Mazeretleri',
-        html: getEmail({
-          title: `Değerli ${(data?.personnel as Personnel).fullName}`,
-          buttonTitle: 'Mazeretleri Gör',
-          buttonURL: `${process.env.PUBLIC_URL}`,
-          date: `${formatDate(new Date(data.startDate))}-${formatDate(new Date(data.endDate))}`,
-          datetitle: 'Başlangıç ve Bitiş Tarihi',
-          description: `${formatDate(new Date(data.startDate))}-${formatDate(new Date(data.endDate))} tarihleri arasında <b>${(data.exceptions_type as DutyExceptionsType).name}</b> sebebiyle mazaret talebinde bulunmuştunuz.Mazeretiniz ${values.status === 'approved' ? '<b style="color: green">onaylanmıştır.</b>' : '<b style="color: red">reddedilmiştir.</b> Nöbet kıdemliniz ile iletişime geçiniz.'}. Açıklama;</br></br>
-        ${values.reason}
-        `,
-        }),
-      })
-    }
-  }
+  // if (values.status === 'approved' || values.status === 'rejected') {
+  //   if (formatDate(new Date(data.startDate)) === formatDate(new Date(data.endDate))) {
+  //     const email = await payload.sendEmail({
+  //       to: 'rustema@hvkk.tsk.tr',
+  //       // to: ((auth.group as Group).chief as Personnel).email,
+  //       subject: 'Nöbet Mazeretleri',
+  //       html: getEmail({
+  //         title: `Değerli ${(data?.personnel as Personnel).fullName}`,
+  //         buttonTitle: 'Mazeretleri Gör',
+  //         buttonURL: `${process.env.PUBLIC_URL}`,
+  //         date: `${formatDate(new Date(data.startDate))}`,
+  //         datetitle: 'Mazeret Tarihi',
+  //         description: `${formatDate(new Date(data.startDate))} tarihinde <b>${(data.exceptions_type as DutyExceptionsType).name}</b> sebebiyle mazaret talebinde bulunmuştunuz.Mazeretiniz ${values.status === 'approved' ? '<b style="color: green">onaylanmıştır.</b>' : '<b style="color: red">reddedilmiştir.</b> Nöbet kıdemliniz ile iletişime geçiniz.'}. Açıklama;</br></br>
+  //       ${values.reason}
+  //       `,
+  //       }),
+  //     })
+  //   } else {
+  //     const email = await payload.sendEmail({
+  //       to: 'rustema@hvkk.tsk.tr',
+  //       // to: ((auth.group as Group).chief as Personnel).email,
+  //       subject: 'Nöbet Mazeretleri',
+  //       html: getEmail({
+  //         title: `Değerli ${(data?.personnel as Personnel).fullName}`,
+  //         buttonTitle: 'Mazeretleri Gör',
+  //         buttonURL: `${process.env.PUBLIC_URL}`,
+  //         date: `${formatDate(new Date(data.startDate))}-${formatDate(new Date(data.endDate))}`,
+  //         datetitle: 'Başlangıç ve Bitiş Tarihi',
+  //         description: `${formatDate(new Date(data.startDate))}-${formatDate(new Date(data.endDate))} tarihleri arasında <b>${(data.exceptions_type as DutyExceptionsType).name}</b> sebebiyle mazaret talebinde bulunmuştunuz.Mazeretiniz ${values.status === 'approved' ? '<b style="color: green">onaylanmıştır.</b>' : '<b style="color: red">reddedilmiştir.</b> Nöbet kıdemliniz ile iletişime geçiniz.'}. Açıklama;</br></br>
+  //       ${values.reason}
+  //       `,
+  //       }),
+  //     })
+  //   }
+  // }
   revalidatePath('/exceptions')
   return data
 }

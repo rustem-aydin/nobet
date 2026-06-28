@@ -30,6 +30,5 @@ export const getAllDutyTypes = async (
       ],
     },
   })
-  console.log(JSON.stringify(types.docs, null, 0))
   return types.docs
 }

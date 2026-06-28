@@ -151,7 +151,6 @@ export function ScheduleProvider({
         {
           loading: 'Nöbet Oluşturuluyor',
           success: (data: any) => {
-            console.log(data.duty)
             return (
               String(((data?.duty as DutySchedule).personnel as Personnel).fullName) +
               ` Nöbet Atandı`

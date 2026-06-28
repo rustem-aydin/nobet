@@ -8,6 +8,7 @@ import {
   statusReadAccess,
   statusUpdateAccess,
 } from './access'
+import { checkDuplicateDutyException } from './hooks'
 
 export const DutyExceptions: CollectionConfig = {
   slug: 'duty_exceptions',
@@ -24,6 +25,9 @@ export const DutyExceptions: CollectionConfig = {
     delete: canDelete,
   },
   indexes: [{ fields: ['personnel', 'startDate'] }],
+  hooks: {
+    beforeChange: [checkDuplicateDutyException],
+  },
   fields: [
     {
       name: 'personnel',

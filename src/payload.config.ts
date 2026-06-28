@@ -42,17 +42,17 @@ export default buildConfig({
           }
         : false,
   },
-  // onInit: async (payload) => {
-  //   const users = await payload.find({
-  //     collection: 'personnel',
-  //     limit: 1,
-  //   })
+  onInit: async (payload) => {
+    const users = await payload.find({
+      collection: 'personnel',
+      limit: 1,
+    })
 
-  //   if (users.docs.length === 0) {
-  //     console.log('🌱 Seeding initial data...')
-  //     await seedData(payload)
-  //   }
-  // },
+    if (users.docs.length === 0) {
+      console.log('🌱 Seeding initial data...')
+      await seedData(payload)
+    }
+  },
   collections: [
     Personnel,
     Groups,

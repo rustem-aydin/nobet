@@ -67,9 +67,9 @@ export function DayCell({ cell, events, eventPositions, dutyType }: IProps) {
 
   // Sadece bayramlar için arka plan
   const cellBgStyle = useMemo(() => {
-    if (!dutyType || !currentMonth || !dutyType.isHoliday) return {}
+    if (!dutyType || !currentMonth) return {}
     return {
-      backgroundColor: `${dutyType.color}12`,
+      backgroundColor: `${dutyType.color}10`, // 12 = %7 opaklık (hex alpha)
     }
   }, [dutyType, currentMonth])
 

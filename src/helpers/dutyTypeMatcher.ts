@@ -16,57 +16,44 @@ export interface DutyTypeWithDates {
 }
 
 export function expandDutyTypesToDates(dutyTypes: DutyType[], year: number): DutyTypeWithDates[] {
-  const yearStr = year.toString()
+  return dutyTypes
+    .filter((dt) => dt.isActive) // Sadece aktif olanları al
+    .filter((dt) => dt.year === year) // İstenen yıla göre filtrele
+    .map((dt) => {
+      const dateEntries: Array<{ date: Date; description: string }> = []
+      const isHoliday = dt.name.toLowerCase().includes('bayram')
 
-  return dutyTypes.map((dt) => {
-    const dateEntries: Array<{ date: Date; description: string }> = []
-    const isHoliday = dt.name.toLowerCase().includes('bayram')
+      dt.cronSchedules?.forEach(({ cron, description }) => {
+        try {
+          const startIso = new Date(year, 0, 1).toISOString()
+          const endIso = new Date(year, 11, 31, 23, 59, 59).toISOString()
 
-    // YILA GÖRE FİLTRELE - yearConfigs içinden istenen yılı bul
-    const yearConfig = dt.yearConfigs?.find((yc) => yc.year === yearStr && yc.isActive)
+          const interval = CronExpressionParser.parse(cron, {
+            currentDate: startIso,
+            endDate: endIso,
+          })
 
-    if (!yearConfig) {
+          const allDates = interval.take(366)
+          allDates.forEach((d) => {
+            dateEntries.push({
+              date: startOfDay(d.toDate()),
+              description,
+            })
+          })
+        } catch (err) {
+          console.error('Cron parse hatası:', cron, err)
+        }
+      })
+
       return {
         id: dt.id,
         name: dt.name,
         color: dt.color,
         priority: dt.priority,
         isHoliday,
-        dates: [],
-      }
-    }
-
-    yearConfig.cronSchedules.forEach(({ cron, description }) => {
-      try {
-        const startIso = new Date(year, 0, 1).toISOString()
-        const endIso = new Date(year, 11, 31, 23, 59, 59).toISOString()
-
-        const interval = CronExpressionParser.parse(cron, {
-          currentDate: startIso,
-          endDate: endIso,
-        })
-
-        const allDates = interval.take(366)
-        allDates.forEach((d) => {
-          dateEntries.push({
-            date: startOfDay(d.toDate()),
-            description,
-          })
-        })
-      } catch (err) {
-        console.error('Cron parse hatası:', cron, err)
+        dates: dateEntries,
       }
     })
-
-    return {
-      id: dt.id,
-      name: dt.name,
-      color: dt.color,
-      priority: dt.priority,
-      isHoliday,
-      dates: dateEntries,
-    }
-  })
 }
 
 export function getDutyTypeForDate(
@@ -99,11 +86,8 @@ export function getDutyDatesForMonth(
 ): Array<{ date: Date; description: string }> {
   const results: Array<{ date: Date; description: string }> = []
 
-  // Ayın ilk günü (00:00:00 UTC)
   const start = new Date(Date.UTC(year, month, 1))
-  // Ayın son günü + 1 gün (endDate dahil etmek için)
   const end = new Date(Date.UTC(year, month + 1, 1))
-  // currentDate'yi 1 gün geriye al (cron parser currentDate'i dahil etmiyor)
   const currentDate = new Date(Date.UTC(year, month, 0))
 
   for (const { cron, description } of cronSchedules) {
@@ -123,7 +107,6 @@ export function getDutyDatesForMonth(
           Date.UTC(rawDate.getUTCFullYear(), rawDate.getUTCMonth(), rawDate.getUTCDate()),
         )
 
-        // Sadece ayın içinde kalan tarihleri ekle
         if (cleanDate.getUTCMonth() === month && cleanDate.getUTCFullYear() === year) {
           results.push({
             date: cleanDate,

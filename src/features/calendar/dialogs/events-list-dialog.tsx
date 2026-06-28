@@ -85,7 +85,7 @@ export function EventListDialog({
               )
             })
           ) : (
-            <p className="text-sm text-muted-foreground">Bu tarih için etkinlik bulunmamaktadır.</p>
+            <p className="text-sm text-muted-foreground">Bu tarih için mazeret bulunmamaktadır.</p>
           )}
         </div>
       </ModalContent>

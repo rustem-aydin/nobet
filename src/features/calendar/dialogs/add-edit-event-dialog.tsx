@@ -140,7 +140,7 @@ export function AddEditEventDialog({ children, startDate, startTime, event }: IP
         onClose()
         form.reset()
       } catch (error) {
-        console.error(`Etkinlik ${isEditing ? 'güncellenirken' : 'eklenirken'} hata:`, error)
+        console.error(`Mazeret  ${isEditing ? 'güncellenirken' : 'eklenirken'} hata:`, error)
       }
     },
     [isEditing, event, updateEvent, addEvent, onClose, form],

@@ -66,7 +66,6 @@ export default async function SchedulePage({
   const duty_schedules = await getScheduleForMonth({
     date: date || undefined,
   })
-  console.log(duty_types)
   return (
     <main className="flex max-h-screen flex-col">
       <header className="flex h-16 shrink-0 items-center gap-2">
