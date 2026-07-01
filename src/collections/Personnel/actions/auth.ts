@@ -6,7 +6,6 @@ import { revalidatePath } from 'next/cache'
 import { getPayload } from 'payload'
 import { cookies, headers } from 'next/headers'
 import { Personnel } from '@/payload-types'
-import { redirect } from 'next/navigation'
 import { LoginFormData } from 'types/schemas'
 
 export async function logoutAction() {

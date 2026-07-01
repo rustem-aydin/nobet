@@ -18,21 +18,23 @@ interface Props {
   personnel: Personnel
   items: Item[]
   dutyType: DutyType
-  dutyTypes: DutyType[]
+  dutyTypes: DutyType[] // 👈 KALSIN, UpdatePersonel kullanıyor
   auth: Personnel
   rank: number
   isDraggable: boolean
+  expectedCount: number // 👈 YENİ
 }
 
 export function ScheduleCeteleRow({
   id,
   personnel,
-  dutyTypes,
+  dutyTypes, // 👈 KALSIN
   items,
   dutyType,
   isDraggable,
   auth,
   rank,
+  expectedCount, // 👈 YENİ
 }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
@@ -78,7 +80,13 @@ export function ScheduleCeteleRow({
       </td>
 
       <td className="px-3 py-2 align-top">
-        <ScheduleCeteleCell items={items} personnel={personnel} dutyType={dutyType} auth={auth} />
+        <ScheduleCeteleCell
+          items={items}
+          personnel={personnel}
+          dutyType={dutyType}
+          auth={auth}
+          expectedCount={expectedCount}
+        />
       </td>
     </tr>
   )

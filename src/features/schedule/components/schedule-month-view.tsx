@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { getCalendarCells } from '@/features/calendar/helpers'
 import { ScheduleDayCell } from './schedule-day-cell'
 import { useSchedule } from '../contexts/schedule-context'
-import { getDutyTypeForDate, expandDutyTypesToDates } from '@/helpers/dutyTypeMatcher'
+import { expandDutyTypesToDates, getDutyTypeForDate } from '@/helpers/dutyTypeMatcher'
 import type { Personnel } from '@/payload-types'
 
 const WEEK_DAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
@@ -18,11 +18,10 @@ interface Props {
 }
 
 export function ScheduleMonthView({ year, month, dutyTypeId, schedules, loading }: Props) {
-  const { duty_types, selectedPersonnel } = useSchedule() // ✅ personel filtresini çek
+  const { duty_types, selectedPersonnel } = useSchedule()
   const selectedDate = useMemo(() => new Date(year, month), [year, month])
   const cells = useMemo(() => getCalendarCells(selectedDate), [selectedDate])
 
-  // ✅ Personel filtresini uygulayarak scheduleMap oluştur
   const scheduleMap = useMemo(() => {
     const map = new Map<string, any[]>()
     const filtered = selectedPersonnel
@@ -38,19 +37,13 @@ export function ScheduleMonthView({ year, month, dutyTypeId, schedules, loading 
     return map
   }, [schedules, selectedPersonnel])
 
-  const dutyTypesWithDates = useMemo(() => {
-    const filteredByYear = duty_types
-      .map((dt) => ({
-        ...dt,
-        yearConfigs:
-          dt.yearConfigs?.filter((yc) => yc.year === year.toString() && yc.isActive) || [],
-      }))
-      .filter((dt) => dt.yearConfigs.length > 0)
+  // ✅ yearConfigs yok artık — helper içinde dt.isActive + dt.year === year kontrolü yapıyor
+  const dutyTypesWithDates = useMemo(
+    () => expandDutyTypesToDates(duty_types, year),
+    [duty_types, year],
+  )
 
-    return expandDutyTypesToDates(filteredByYear, year)
-  }, [duty_types, year])
-
-  // ✅ Her hücre için tarihe göre dutyType bul
+  // ✅ Her hücre için cron-tabanlı eşleştirme → en yüksek öncelikli nöbet türü
   const cellDutyTypes = useMemo(() => {
     const map = new Map<string, ReturnType<typeof getDutyTypeForDate>>()
     cells.forEach((cell) => {
@@ -88,7 +81,7 @@ export function ScheduleMonthView({ year, month, dutyTypeId, schedules, loading 
             cell={cell}
             schedules={scheduleMap}
             dutyTypeId={dutyTypeId}
-            dutyType={cellDutyTypes.get(cell.date.toISOString())} // ✅
+            dutyType={cellDutyTypes.get(cell.date.toISOString())}
           />
         ))}
       </div>

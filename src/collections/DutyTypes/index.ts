@@ -2,11 +2,13 @@
 import type { CollectionConfig } from 'payload'
 import { colorPickerField } from '../custom/ColorPicker'
 import { isAdmin } from './access'
+import { beforeValid, checkGlobalCronUniqueness } from './hooks'
 
 export const DutyTypes: CollectionConfig = {
   slug: 'duty_types',
   admin: {
     useAsTitle: 'name',
+    defaultColumns: ['name', 'group', 'year', 'priority'],
   },
   labels: {
     plural: 'Nöbet Türleri',
@@ -18,6 +20,7 @@ export const DutyTypes: CollectionConfig = {
     delete: isAdmin,
     read: () => true,
   },
+  hooks: { beforeValidate: [beforeValid, checkGlobalCronUniqueness] },
   fields: [
     {
       name: 'name',
@@ -69,12 +72,7 @@ export const DutyTypes: CollectionConfig = {
         description: 'Çakışma durumunda düşük sayı yüksek öncelik (1 = en yüksek)',
       },
     },
-    {
-      name: 'columnOrder',
-      type: 'number',
-      required: true,
-      label: 'Sütun Sırası',
-    },
+
     {
       name: 'sortOrder',
       type: 'select',

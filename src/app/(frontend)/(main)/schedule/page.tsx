@@ -4,6 +4,7 @@ import { getAuth } from '@/collections/Personnel/actions/auth'
 import { ScheduleCetele } from '@/features/schedule-cetele/schedule-cetele'
 import { getAllPersonnels } from '@/collections/Personnel/actions/getAllPersonnels'
 import { getAllDutyTypes } from '@/collections/DutyTypes/actions/getAllDutyTypes'
+
 export default async function SchedulePage() {
   const auth = await getAuth()
   const personnels = await getAllPersonnels(3)
@@ -21,7 +22,7 @@ export default async function SchedulePage() {
         <ScheduleCetele
           dutyTypes={dutyTypes}
           personnels={personnels}
-          initialDutyTypeId={dutyTypes[6]?.id}
+          initialDutyTypeId={dutyTypes[0]?.id}
           auth={auth}
         />
       </div>

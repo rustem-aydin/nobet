@@ -14,6 +14,7 @@ interface Props {
   personnel: Personnel
   dutyType: DutyType
   auth: Personnel
+  expectedCount: number // 👈 YENİ
 }
 
 const MONTH_ABBR = [
@@ -31,22 +32,33 @@ const MONTH_ABBR = [
   'Ara',
 ]
 
-export function ScheduleCeteleCell({ items, personnel, dutyType, auth }: Props) {
-  if (items.length === 0) {
-    return <span className="text-muted-foreground/40 text-xs">—</span>
-  }
-  // personnel.schedule.docs içindeki isOffical=true olan tarihleri Set olarak tut
+export function ScheduleCeteleCell({ items, personnel, dutyType, auth, expectedCount }: Props) {
+  const today = startOfDay(new Date())
+
+  const actualCount = items.length
+  const missingCount = Math.max(0, expectedCount - actualCount)
+
   const officialDates = new Set(
     (personnel.schedule?.docs as DutySchedule[])
       ?.filter((s) => s.isOffical === true)
       ?.map((s) => new Date(s.dutyDate).toDateString()) ?? [],
   )
 
-  // Bugünün başlangıcı (saat 00:00:00)
-  const today = startOfDay(new Date())
+  if (items.length === 0 && missingCount === 0) {
+    return <span className="text-muted-foreground/40 w-12 inline-block text-center text-xs">—</span>
+  }
 
   return (
     <div className="flex flex-wrap gap-1">
+      {Array.from({ length: missingCount }).map((_, idx) => (
+        <span
+          key={`empty-${idx}`}
+          className={cn(
+            'inline-block w-12 h-full py-2.5 text-center text-[11px] font-medium rounded border',
+            'bg-orange-200 border-orange-700 text-gray-400',
+          )}
+        ></span>
+      ))}
       {items.map((item, idx) => {
         const day = String(getDate(item.date)).padStart(2, '0')
         const month = MONTH_ABBR[getMonth(item.date)]
@@ -54,10 +66,8 @@ export function ScheduleCeteleCell({ items, personnel, dutyType, auth }: Props) 
         const isOfficial = isException && item.exceptionType === 'official'
         const isUnofficial = isException && item.exceptionType === 'unofficial'
 
-        // personnel.schedule.docs içindeki isOffical kontrolü
         const scheduleIsOfficial = officialDates.has(item.date.toDateString())
 
-        // Tarih durumu: geçmiş, bugün, gelecek
         const itemDate = startOfDay(item.date)
         const isPast = isBefore(itemDate, today)
         const isToday = isSameDay(itemDate, today)
@@ -76,25 +86,17 @@ export function ScheduleCeteleCell({ items, personnel, dutyType, auth }: Props) 
             <span
               className={cn(
                 'inline-block px-1.5 py-0.5 text-[11px] font-medium rounded border cursor-pointer transition-colors',
-                // Exception durumları (en yüksek öncelik)
                 isOfficial && 'bg-yellow-200 border-yellow-400 text-yellow-900',
                 isUnofficial && 'bg-gray-300 border-gray-500 text-gray-900',
-
-                // isOffical === true ise: gri arka plan, siyah yazı
                 scheduleIsOfficial && 'bg-gray-400 border-gray-600 text-black',
-
-                // Normal schedule tarihleri (exception veya isOffical değilse)
-                // Geçmiş tarih: yeşil
                 !isException &&
                   !scheduleIsOfficial &&
                   isPast &&
                   'bg-green-200 border-green-500 text-green-900',
-                // Bugün: sarı
                 !isException &&
                   !scheduleIsOfficial &&
                   isToday &&
                   'bg-purple-200 border-purple-500 text-purple-900',
-                // Gelecek tarih: mavi
                 !isException &&
                   !scheduleIsOfficial &&
                   isFuture &&

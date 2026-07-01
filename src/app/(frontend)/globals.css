@@ -4,6 +4,23 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
 @keyframes fadeSlideIn {
   to {
     opacity: 1;
@@ -162,6 +179,8 @@ section:target .targeted-card {
 }
 
 @theme inline {
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

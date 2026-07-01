@@ -24,7 +24,7 @@ export async function Calendar({
       view="month"
     >
       <DndProvider>
-        <div className="w-full  border rounded-xl">
+        <div className="w-full mb-4  ">
           <CalendarHeader />
           <CalendarBody />
         </div>

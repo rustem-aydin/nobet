@@ -22,13 +22,14 @@ import {
 import { Dialog } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { DutyType, Personnel } from '@/payload-types'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Edit } from 'lucide-react'
 import { updatePersonnelSchema, UpdatePersonnelFormValues } from 'types/schemas'
 import { updatePersonnel } from '@/collections/Personnel/actions/updatePersonnel'
 import ConfirmDialog from '@/components/confirm-dialog'
 import { deletePersonnel } from '@/collections/Personnel/actions/deletePersonnel'
+import { checkEmailUnique } from '@/collections/Personnel/actions/checkEmailUnique'
 
 export function UpdatePersonel({
   dutyTypes,
@@ -38,9 +39,12 @@ export function UpdatePersonel({
   personnel: Personnel
 }) {
   const [isOpen, setIsOpen] = useState(false)
-
+  const schema = useMemo(
+    () => updatePersonnelSchema(String(personnel.id), checkEmailUnique),
+    [personnel.id],
+  )
   const form = useForm<UpdatePersonnelFormValues>({
-    resolver: zodResolver(updatePersonnelSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       email: '',
       fullName: '',
@@ -187,7 +191,6 @@ export function UpdatePersonel({
               )}
             />
 
-            {/* DutyType Sıralamaları - Salt Okunur */}
             <div className="border rounded-lg p-3 space-y-3">
               <h4 className="text-sm font-medium text-muted-foreground">
                 Nöbet Tipi Sıralamaları (Görüntüleme)

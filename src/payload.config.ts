@@ -16,9 +16,9 @@ import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import { DutySwapRequests } from './collections/DutySwapRequests'
 import { getAuth } from '@/collections/Personnel/actions/auth'
 import { Group } from './payload-types'
-import { revalidatePath } from 'next/cache'
 import { migrations } from './migrations'
 import { seedData } from '@/seed'
+import { ParentGroup } from './collections/ParentGroup'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -62,6 +62,7 @@ export default buildConfig({
     DutyExceptionsTypes,
     DutySwapRequests,
     PersonnelDutyCounts,
+    ParentGroup,
     // EmailTemplates,
   ],
   editor: lexicalEditor(),
@@ -156,7 +157,7 @@ export default buildConfig({
             req.payload.logger.info(
               `[Cron Job] ${result.docs.length} adet nöbet 'completed' olarak güncellendi.`,
             )
-            revalidatePath('/schedule')
+            // revalidatePath('/schedule')
 
             return {
               output: {

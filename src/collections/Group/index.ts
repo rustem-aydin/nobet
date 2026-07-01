@@ -45,6 +45,13 @@ export const Groups: CollectionConfig = {
       },
     },
     {
+      name: 'parent_group',
+      type: 'relationship',
+      relationTo: 'parent_group',
+
+      label: 'Nöbet Grubu',
+    },
+    {
       name: 'cooldownDays',
       type: 'number',
       required: true,

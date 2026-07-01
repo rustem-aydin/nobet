@@ -36,6 +36,7 @@ import { DutyException, DutyExceptionsType } from '@/payload-types'
 import FormDateRange from '@/components/form-date'
 import { Dialog } from '@/components/ui/dialog'
 import { eventSchema, TEventFormData } from 'types/schemas'
+import { toast } from 'sonner'
 
 interface IProps {
   children: ReactNode
@@ -121,20 +122,34 @@ export function AddEditEventDialog({ children, startDate, startTime, event }: IP
     async (values: TEventFormData) => {
       try {
         if (isEditing && event) {
-          await updateEvent(event.id, {
-            reason: values.reason,
-            exceptions_type: Number(values.exceptions_type),
-            startDate: format(values.dateRange!.from, "yyyy-MM-dd'T'HH:mm:ss"),
-            endDate: format(values.dateRange!.to, "yyyy-MM-dd'T'HH:mm:ss"),
-          })
+          toast.promise(
+            updateEvent(event.id, {
+              reason: values.reason,
+              exceptions_type: Number(values.exceptions_type),
+              startDate: format(values.dateRange!.from, "yyyy-MM-dd'T'HH:mm:ss"),
+              endDate: format(values.dateRange!.to, "yyyy-MM-dd'T'HH:mm:ss"),
+            }),
+            {
+              loading: 'Mazeret Güncelleniyor',
+              success: 'Mazeret Güncellendi',
+              error: (err) => String(err),
+            },
+          )
         } else {
-          await addEvent({
-            reason: values.reason,
-            exceptions_type: Number(values.exceptions_type),
-            startDate: format(values.dateRange!.from, "yyyy-MM-dd'T'HH:mm:ss"),
-            endDate: format(values.dateRange!.to, "yyyy-MM-dd'T'HH:mm:ss"),
-            status: 'pending',
-          })
+          toast.promise(
+            addEvent({
+              reason: values.reason,
+              exceptions_type: Number(values.exceptions_type),
+              startDate: format(values.dateRange!.from, "yyyy-MM-dd'T'HH:mm:ss"),
+              endDate: format(values.dateRange!.to, "yyyy-MM-dd'T'HH:mm:ss"),
+              status: 'pending',
+            }),
+            {
+              loading: 'Mazeret Ekleniyor',
+              success: 'Mazeret Eklendi',
+              error: (err) => String(err),
+            },
+          )
         }
 
         onClose()

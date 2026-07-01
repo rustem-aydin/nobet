@@ -78,8 +78,6 @@ export function LoginForm({
         setSubmitError(err)
         onSubmitErrorChange(err)
         onSuccessChange(false)
-
-        console.log('❌ Login failed')
       }
     } catch (error) {
       const err = 'An unexpected error occurred. Please try again.'

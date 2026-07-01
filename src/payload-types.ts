@@ -75,6 +75,7 @@ export interface Config {
     duty_exceptions_types: DutyExceptionsType;
     duty_swap_requests: DutySwapRequest;
     personnel_duty_counts: PersonnelDutyCount;
+    parent_group: ParentGroup;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -97,6 +98,7 @@ export interface Config {
     duty_exceptions_types: DutyExceptionsTypesSelect<false> | DutyExceptionsTypesSelect<true>;
     duty_swap_requests: DutySwapRequestsSelect<false> | DutySwapRequestsSelect<true>;
     personnel_duty_counts: PersonnelDutyCountsSelect<false> | PersonnelDutyCountsSelect<true>;
+    parent_group: ParentGroupSelect<false> | ParentGroupSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -216,10 +218,22 @@ export interface Group {
    * Bu grubun nöbet kıdemlisi (sadece admin atayabilir)
    */
   chief?: (number | null) | Personnel;
+  parent_group?: (number | null) | ParentGroup;
   /**
    * Nöbet sonrası izinli gün sayısı (grup bazlı)
    */
   cooldownDays: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "parent_group".
+ */
+export interface ParentGroup {
+  id: number;
+  name: string;
+  description?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -253,7 +267,6 @@ export interface DutyType {
    * Çakışma durumunda düşük sayı yüksek öncelik (1 = en yüksek)
    */
   priority: number;
-  columnOrder: number;
   sortOrder: 'normal' | 'reverse';
   /**
    * Bi renk seç
@@ -483,6 +496,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'personnel_duty_counts';
         value: number | PersonnelDutyCount;
+      } | null)
+    | ({
+        relationTo: 'parent_group';
+        value: number | ParentGroup;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -564,6 +581,7 @@ export interface GroupsSelect<T extends boolean = true> {
   name?: T;
   description?: T;
   chief?: T;
+  parent_group?: T;
   cooldownDays?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -584,7 +602,6 @@ export interface DutyTypesSelect<T extends boolean = true> {
         id?: T;
       };
   priority?: T;
-  columnOrder?: T;
   sortOrder?: T;
   color?: T;
   isActive?: T;
@@ -656,6 +673,16 @@ export interface PersonnelDutyCountsSelect<T extends boolean = true> {
   personnel?: T;
   dutyType?: T;
   count?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "parent_group_select".
+ */
+export interface ParentGroupSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
   updatedAt?: T;
   createdAt?: T;
 }

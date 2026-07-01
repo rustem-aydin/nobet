@@ -1,5 +1,21 @@
-import { Personnel } from '@/payload-types'
-import type { CollectionBeforeChangeHook } from 'payload'
+import type { CollectionBeforeChangeHook, Where } from 'payload'
+
+// Timezone kayması olmaması için günü sabitleyen fonksiyon
+const normalizeDateToDayOnly = (dateStr: string): string => {
+  const date = new Date(dateStr)
+
+  // Kullanıcının yerel saatindeki (Örn: Türkiye saati) Gün, Ay, Yıl bilgilerini alıyoruz
+  // getFullYear, getMonth, getDate fonksiyonları yerel zamana göre çalışır.
+  const year = date.getFullYear()
+  const month = date.getMonth() // 0-indexed (Ocak = 0)
+  const day = date.getDate()
+
+  // Bu yerel tarih bilgisini kullanarak, UTC zaman diliminde tam gece yarısı (00:00:00) olan yeni bir tarih oluşturuyoruz.
+  // Bu sayede 10 Haziran seçilirse, veritabanına kesinlikle 10 Haziran 00:00:00Z olarak kaydedilir.
+  const utcDate = new Date(Date.UTC(year, month, day, 0, 0, 0, 0))
+
+  return utcDate.toISOString()
+}
 
 export const checkDuplicateDutyException: CollectionBeforeChangeHook = async ({
   operation,
@@ -7,61 +23,43 @@ export const checkDuplicateDutyException: CollectionBeforeChangeHook = async ({
   req,
   originalDoc,
 }) => {
-  // Güncelleme işleminde kendi kaydını hariç tutmak için ID'yi al
-
   const personnelId = data.personnel
   const currentId = operation === 'update' ? originalDoc?.id : null
 
-  if (!personnelId) {
+  if (!personnelId || !data.startDate || !data.endDate) {
     return data
   }
 
-  const startDate = new Date(data.startDate)
-  const endDate = new Date(data.endDate)
+  // Gelen tarihleri artık doğru bir şekilde gün bazlı normalize ediyoruz
+  const newStartDate = normalizeDateToDayOnly(data.startDate)
+  const newEndDate = normalizeDateToDayOnly(data.endDate)
+
+  // Veritabanına da sadece gün olarak kaydediyoruz
+  data.startDate = newStartDate
+  data.endDate = newEndDate
+
+  const andConditions: Where[] = [
+    { personnel: { equals: personnelId } },
+    { startDate: { less_than_equal: newEndDate } },
+    { endDate: { greater_than_equal: newStartDate } },
+  ]
+
+  if (currentId) {
+    andConditions.push({ id: { not_equals: currentId } })
+  }
+
   const existingExceptions = await req.payload.find({
     collection: 'duty_exceptions',
-    where: {
-      and: [
-        { personnel: { equals: personnelId } },
-        {
-          // Kendi kaydını hariç tut (güncelleme sırasında)
-          ...(currentId ? { id: { not_equals: currentId } } : {}),
-        },
-        {
-          or: [
-            // Yeni başlangıç, mevcut aralık içinde
-            {
-              and: [
-                { startDate: { less_than_equal: startDate.toISOString() } },
-                { endDate: { greater_than_equal: startDate.toISOString() } },
-              ],
-            },
-            // Yeni bitiş, mevcut aralık içinde
-            {
-              and: [
-                { startDate: { less_than_equal: endDate.toISOString() } },
-                { endDate: { greater_than_equal: endDate.toISOString() } },
-              ],
-            },
-            // Yeni aralık, mevcut aralığı tamamen kapsıyor
-            {
-              and: [
-                { startDate: { greater_than_equal: startDate.toISOString() } },
-                { endDate: { less_than_equal: endDate.toISOString() } },
-              ],
-            },
-          ],
-        },
-      ],
-    },
+    where: { and: andConditions },
     limit: 1,
     depth: 0,
   })
 
   if (existingExceptions.totalDocs > 0) {
-    throw new Error(
-      `Bu personel için seçilen tarih aralığında (${startDate.toLocaleDateString('tr-TR')} - ${endDate.toLocaleDateString('tr-TR')}) zaten bir mazeret kaydı mevcut. Aynı tarihler için ikinci bir mazeret oluşturulamaz.`,
-    )
+    const start = new Date(newStartDate).toLocaleDateString('tr-TR')
+    const end = new Date(newEndDate).toLocaleDateString('tr-TR')
+
+    throw new Error(`Bu tarih aralığında (${start} - ${end}) zaten bir mazeret kaydınız mevcut.`)
   }
 
   return data

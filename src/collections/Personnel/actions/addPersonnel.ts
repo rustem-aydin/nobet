@@ -11,7 +11,6 @@ const payload = await getPayload({ config })
 export const addPersonnel = async (values: PersonnelFormValues): Promise<Personnel> => {
   const auth = await getAuth()
 
-  // 1. Personel oluştur
   const personnel = await payload.create({
     collection: 'personnel',
     user: auth,
@@ -24,7 +23,6 @@ export const addPersonnel = async (values: PersonnelFormValues): Promise<Personn
     },
   })
 
-  // 2. dutyType_X alanlarını bul ve ekle
   const dutyEntries = Object.entries(values).filter(([key]) => key.startsWith('dutyType_'))
 
   for (const [key, count] of dutyEntries) {

@@ -19,7 +19,6 @@ export function ScheduleCetele({ dutyTypes, auth, personnels, initialDutyTypeId 
   const [currentIndex, setCurrentIndex] = useState(
     dutyTypes.findIndex((d) => d.id === initialDutyTypeId),
   )
-
   const currentDutyType = currentIndex >= 0 ? dutyTypes[currentIndex] : null
 
   const scheduleMap = useMemo<ScheduleMap>(() => {

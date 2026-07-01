@@ -22,7 +22,7 @@ export function CalendarBody() {
     return !isSameDay(startDate, endDate)
   })
   return (
-    <div className="w-full h-full overflow-scroll relative">
+    <div className="w-full h-full border-x border-b relative">
       <motion.div
         key={view}
         initial="initial"

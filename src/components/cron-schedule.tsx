@@ -1,5 +1,11 @@
+'use client'
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { Button } from './ui/button'
+import { Edit, Trash } from 'lucide-react'
+import ConfirmDialog from './confirm-dialog'
+import { toast } from 'sonner'
+import { deleteCronSchedule } from '@/collections/DutyTypes/actions/deleteDutyTypesCron'
 
 const FIELD_NAMES = ['Dakika', 'Saat', 'Gün (Ay)', 'Ay', 'Gün (Hafta)'] as const
 const FIELD_RANGES: [number, number][] = [
@@ -178,6 +184,7 @@ function formatNextRun(date: Date): string {
 
 interface CronScheduleProps extends Omit<React.ComponentProps<'div'>, 'children' | 'title'> {
   expression: string
+  dutyTypeId: string
   title?: string
   showNextRuns?: number
   color: string
@@ -187,6 +194,7 @@ interface CronScheduleProps extends Omit<React.ComponentProps<'div'>, 'children'
 function CronSchedule({
   expression,
   title,
+  dutyTypeId,
   color,
   showNextRuns = 0,
   referenceDate,
@@ -215,7 +223,13 @@ function CronSchedule({
     showNextRuns > 0 ? getNextRuns(fields, showNextRuns, referenceDate ?? new Date()) : []
 
   const visibleFieldIndices = [2, 3, 4] // Gün(Ay), Ay, Gün(Hafta)
-
+  const handleDelete = async () => {
+    toast.promise(deleteCronSchedule(Number(dutyTypeId), expression), {
+      loading: 'Silme İşlemi yapılıyor,',
+      success: 'Silme İşlemi tamamlandı,',
+      error: 'Silme İşlemi tamamlanamadı,',
+    })
+  }
   return (
     <div
       data-slot="cron-schedule"
@@ -225,7 +239,6 @@ function CronSchedule({
       )}
       {...props}
     >
-      {/* Başlık */}
       <div
         style={{ background: `${color}20` }}
         className={`flex items-start justify-between  gap-3 border-b border-border/40 px-4 py-3`}
@@ -234,9 +247,27 @@ function CronSchedule({
           {title && <h3 className="text-sm font-semibold text-foreground">{title}</h3>}
           <p className="text-sm text-muted-foreground">{summary}</p>
         </div>
-        <code className="shrink-0 rounded-md bg-muted px-2.5 py-1 font-mono text-xs text-foreground">
-          {expression}
-        </code>
+        <div className="flex flex-col gap-1 justify-end items-end">
+          <div>
+            <Button variant={'ghost'} size={'xs'}>
+              <Edit />
+            </Button>
+            <ConfirmDialog
+              title="Silmek istiyor musunuz?"
+              description="Nöbet Türü Zamanlayıcı kalıcı olarak silinecektir. Emin misiniz?"
+              onConfirm={handleDelete}
+              cancelText="İptal"
+              confirmText="Evet, Sil"
+            >
+              <Button variant={'destructive'} size={'xs'}>
+                <Trash />
+              </Button>
+            </ConfirmDialog>
+          </div>
+          <code className="shrink-0 rounded-md bg-muted px-2.5 py-1 font-mono text-xs text-foreground">
+            {expression}
+          </code>
+        </div>
       </div>
 
       {/* Alan dökümü – yalnızca gün, ay ve haftanın günü */}

@@ -107,7 +107,7 @@ export default function FormDateRange<T extends FieldValues>({
                   <Calendar
                     locale={tr}
                     defaultMonth={dateValue?.from}
-                    mode="range"
+                    mode={'range'}
                     onSelect={handleDateSelect}
                     selected={dateValue}
                   />

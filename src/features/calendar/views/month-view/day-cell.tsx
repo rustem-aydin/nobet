@@ -2,7 +2,7 @@
 'use client'
 
 import { cva } from 'class-variance-authority'
-import { isToday, startOfDay, isSunday, isSameMonth } from 'date-fns'
+import { isToday, startOfDay, isSunday, isSameMonth, format } from 'date-fns' // format eklendi
 import { motion } from 'framer-motion'
 import { useMemo, useCallback } from 'react'
 
@@ -20,20 +20,22 @@ import { Plus } from 'lucide-react'
 import { AddEditEventDialog } from '@/features/calendar/dialogs/add-edit-event-dialog'
 import { DutyException, DutyExceptionsType } from '@/payload-types'
 
-// YENI: description eklendi
-interface DutyTypeInfo {
+// İsimlendirme birinci bileşenle (CellDutyType) uyumlu hale getirildi
+interface CellDutyType {
+  id: number | string
   name: string
   color: string
   description: string
-  isHoliday?: boolean
+  isHoliday: boolean
 }
 
 interface IProps {
   cell: ICalendarCell
   events: DutyException[]
   eventPositions: Record<string, number>
-  dutyType?: DutyTypeInfo | null
-  index?: number // YENI: Grid indeksi (0-41)
+  dutyTypeId?: string | number
+  dutyType?: CellDutyType | null
+  index?: number
 }
 
 export const dayCellVariants = cva('text-white', {
@@ -55,7 +57,7 @@ export const dayCellVariants = cva('text-white', {
 
 const MAX_VISIBLE_EVENTS = 3
 
-export function DayCell({ cell, events, eventPositions, dutyType }: IProps) {
+export function DayCell({ cell, events, eventPositions, dutyTypeId, dutyType }: IProps) {
   const { day, currentMonth, date } = cell
   const isMobile = useMediaQuery('(max-width: 768px)')
 
@@ -65,13 +67,36 @@ export function DayCell({ cell, events, eventPositions, dutyType }: IProps) {
     return { cellEvents, currentCellMonth }
   }, [date, events, eventPositions])
 
-  // Sadece bayramlar için arka plan
-  const cellBgStyle = useMemo(() => {
-    if (!dutyType || !currentMonth) return {}
-    return {
-      backgroundColor: `${dutyType.color}10`, // 12 = %7 opaklık (hex alpha)
-    }
-  }, [dutyType, currentMonth])
+  // Birinci bileşendeki isCurrentMonth hesaplaması uygulandı
+  const isCurrentMonth = isSameMonth(date, new Date(date.getFullYear(), date.getMonth(), 1))
+    ? currentMonth
+    : false
+
+  // Birinci bileşendeki cellBgColor mantığı uygulandı
+  const cellBgColor = useMemo(() => {
+    if (dutyType?.color) return dutyType.color
+    return undefined
+  }, [dutyType])
+
+  // Birinci bileşendeki hasSchedule mantığı (hasEvent olarak) uygulandı
+  const hasEvent = isCurrentMonth && cellEvents.length > 0
+
+  const renderDutyTypeBadge = useMemo(() => {
+    if (!dutyType || !isCurrentMonth) return null
+
+    return (
+      <motion.div
+        className="absolute top-1 right-1 z-10"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.1, ...transition }}
+      >
+        <span className="inline-block rounded px-1.5 py-0.5 text-[9px] font-bold  text-gray-500 uppercase">
+          {dutyType.description}
+        </span>
+      </motion.div>
+    )
+  }, [dutyType, isCurrentMonth])
 
   const renderEventAtPosition = useCallback(
     (position: number) => {
@@ -110,64 +135,45 @@ export function DayCell({ cell, events, eventPositions, dutyType }: IProps) {
   )
 
   const showMoreCount = cellEvents.length - MAX_VISIBLE_EVENTS
-  const showMobileMore = isMobile && currentMonth && showMoreCount > 0
-  const showDesktopMore = !isMobile && currentMonth && showMoreCount > 0
-
-  // YENI: Sadece bayram etiketi, description göster
-  const renderHolidayBadge = useMemo(() => {
-    if (!dutyType || !currentMonth || !dutyType.isHoliday) return null
-
-    return (
-      <motion.div
-        className="absolute top-1 right-1 z-10"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.1, ...transition }}
-      >
-        <span
-          className="inline-block rounded px-1.5 py-0.5 text-[9px] font-bold text-white uppercase"
-          style={{ backgroundColor: dutyType.color }}
-        >
-          {dutyType.description} {/* ← "Ramazan 1. Gün" veya "23 Nisan" */}
-        </span>
-      </motion.div>
-    )
-  }, [dutyType, currentMonth])
+  const showMobileMore = isMobile && isCurrentMonth && showMoreCount > 0
+  const showDesktopMore = isCurrentMonth && showMoreCount > 0
 
   const cellContent = useMemo(
     () => (
       <motion.div
         className={cn(
-          'relative flex h-full lg:min-h-40 flex-col gap-1 border-l border-t',
-          cell.dayOfWeek === 0 && 'border-l-0', // Pazar (son sütun) sol border yok
+          'relative flex min-h-36 flex-col gap-1 border-l border-t',
+          cell.dayOfWeek === 0 && 'border-l-0',
+          !isCurrentMonth && 'opacity-40 bg-muted/30',
+          isToday(date) && 'ring-1 ring-primary ring-inset',
         )}
-        style={cellBgStyle}
+        style={{ backgroundColor: cellBgColor ? `${cellBgColor}10` : undefined }}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={transition}
       >
-        {/* SADECE BAYRAM ETİKETİ - description ile */}
-        {renderHolidayBadge}
+        {renderDutyTypeBadge}
 
         <DroppableArea date={date} className="w-full h-full py-2">
           <motion.span
             className={cn(
               'h-6 px-1 text-xs font-semibold lg:px-2',
-              !currentMonth && 'opacity-20',
+              !isCurrentMonth && 'opacity-20',
               isToday(date) &&
                 'flex w-6 translate-x-1 items-center justify-center rounded-full bg-primary px-0 font-bold text-primary-foreground',
             )}
           >
+            {/* Gün sayısı ve Haftanın gün ismi (Pzt, Sal, Çar vb.) eklendi */}
             {day}
           </motion.span>
 
           <motion.div
             className={cn(
               'flex h-fit gap-1 px-2 mt-1 lg:h-[94px] lg:flex-col lg:gap-2 lg:px-0',
-              !currentMonth && 'opacity-50',
+              !isCurrentMonth && 'opacity-50',
             )}
           >
-            {cellEvents.length === 0 && !isMobile ? (
+            {!hasEvent && !isMobile ? (
               <div className="w-full h-full flex justify-center items-center group">
                 <AddEditEventDialog startDate={date}>
                   <Button
@@ -196,7 +202,7 @@ export function DayCell({ cell, events, eventPositions, dutyType }: IProps) {
             <motion.div
               className={cn(
                 'h-4.5 px-1.5 my-2 text-end text-xs font-semibold text-muted-foreground',
-                !currentMonth && 'opacity-50',
+                !isCurrentMonth && 'opacity-50',
               )}
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
@@ -211,19 +217,20 @@ export function DayCell({ cell, events, eventPositions, dutyType }: IProps) {
     [
       date,
       day,
-      currentMonth,
+      isCurrentMonth,
       cellEvents,
+      hasEvent,
       showMobileMore,
       showDesktopMore,
       showMoreCount,
       renderEventAtPosition,
       isMobile,
-      cellBgStyle,
-      renderHolidayBadge,
+      cellBgColor,
+      renderDutyTypeBadge,
     ],
   )
 
-  if (isMobile && currentMonth) {
+  if (isMobile && isCurrentMonth) {
     return (
       <EventListDialog date={date} events={cellEvents}>
         {cellContent}

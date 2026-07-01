@@ -52,10 +52,7 @@ export function EventDetailsDialog({ event, children }: IProps) {
   const isApproved = event.status === 'approved'
   const isPending = event.status === 'pending'
 
-  // Onaylama/Reddetme yetkisi: admin veya kıdemli VE kendi talebi değil VE beklemede
   const canApproveOrReject = isApprover && !isOwner && isPending
-
-  // Düzenleme yetkisi: sahibi VE onaylanmamış
   const canEdit = isOwner && !isApproved
 
   // Silme yetkisi: sahibi
@@ -64,10 +61,7 @@ export function EventDetailsDialog({ event, children }: IProps) {
   const deleteEvent = async (eventId: number) => {
     try {
       await removeEvent(eventId)
-      toast.success('Mazeret başarıyla silindi.')
-    } catch {
-      toast.error('Mazeret silinirken bir hata oluştu.')
-    }
+    } catch {}
   }
 
   const handleApprove = async () => {

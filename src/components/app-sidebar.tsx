@@ -45,6 +45,8 @@ const data = {
       url: '/exceptions',
       icon: <CalendarCheck />,
     },
+  ],
+  settings: [
     {
       name: 'Nöbet Tarihleri',
       url: '/dates',
@@ -74,6 +76,7 @@ export function AppSidebar({ personnel, ...props }: AppSidebarProps) {
         <NavMenu label="Genel" items={data.navMain} />
         <NavMenu label="Nöbet" items={data.duty} />
         <NavMenu label="Diğer" items={data.others} />
+        {personnel.role === 'member' ? null : <NavMenu label="Ayarlar" items={data.settings} />}
       </SidebarContent>
       <SidebarFooter>
         <NavUser personnel={personnel} />

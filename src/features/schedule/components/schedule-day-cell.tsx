@@ -7,7 +7,7 @@ import { useSchedule } from '../contexts/schedule-context'
 import { ScheduleContextMenu } from './schedule-context-menu'
 import type { ICalendarCell } from '@/features/calendar/interfaces'
 import { DutySchedule, DutyType, Personnel } from '@/payload-types'
-import { Check, CheckCheck, Clock, Info, Pickaxe } from 'lucide-react'
+import { Ban, Check, CheckCheck, Clock, Info, Pickaxe } from 'lucide-react'
 import { ScheduleNullContextMenu } from './schedule-null-context.menu'
 import { Badge } from '@/components/ui/badge'
 import { getPersonnelIcon } from './personnel-lists'
@@ -153,7 +153,7 @@ export function ScheduleDayCell({ cell, schedules, dutyTypeId, dutyType }: Props
           })
         ) : (
           <span className="flex flex-col text-center items-center text-xs font-bold justify-center h-full text-gray-500 text-sm">
-            <Info className="text-gray-500 text-sm" />
+            <Ban className="text-gray-500 text-sm" />
             Nöbet Bilgisi Bulunamadı
           </span>
         )}

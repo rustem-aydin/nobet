@@ -199,7 +199,7 @@ export const duty_types = pgTable(
       onDelete: 'set null',
     }),
     priority: numeric('priority', { mode: 'number' }).notNull().default(10),
-    columnOrder: numeric('column_order', { mode: 'number' }).notNull(),
+
     sortOrder: enum_duty_types_sort_order('sort_order').notNull().default('normal'),
     color: varchar('color').notNull(),
     isActive: boolean('is_active').default(true),

@@ -11,7 +11,6 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu'
 import { useState } from 'react'
-import { SwapRequestModal } from './swap-request-modal'
 
 interface Props {
   date: string | null

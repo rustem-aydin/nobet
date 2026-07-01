@@ -6,10 +6,15 @@ import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { buttonHover, transition } from '@/features/calendar/animations'
+import { expandDutyTypesToDates } from '@/helpers/dutyTypeMatcher'
+import { DutyType } from '@/payload-types'
 
 const MotionButton = motion.create(Button)
-
-export function YearNavigator() {
+interface YearNavigatorProps {
+  year?: number
+  dutyTypes: DutyType[]
+}
+export function YearNavigator({ year, dutyTypes }: YearNavigatorProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -40,7 +45,12 @@ export function YearNavigator() {
   const handleNext = () => {
     updateYear(selectedYear + 1)
   }
-
+  const dutyTypeCounts = expandDutyTypesToDates(dutyTypes, selectedYear).map((duty) => ({
+    id: duty.id,
+    name: duty.name,
+    color: duty.color,
+    count: duty.dates.length,
+  }))
   return (
     <div className="flex h-24 border justify-between px-4 rounded-xl mb-4 items-center gap-2">
       <MotionButton
@@ -55,7 +65,7 @@ export function YearNavigator() {
         <ChevronLeft className="h-8 w-8" />
       </MotionButton>
 
-      <div>
+      <div className="flex flex-col items-center">
         <motion.span
           key={selectedYear}
           className="min-w-20 text-center text-2xl font-semibold tabular-nums"
@@ -65,6 +75,17 @@ export function YearNavigator() {
         >
           {selectedYear}
         </motion.span>
+        <div className="flex flex-wrap gap-2 text-[10px]">
+          {dutyTypeCounts.map((item) => (
+            <span
+              key={item.id}
+              className="inline-flex items-center gap-1 rounded-xs border px-1 py-0.5 font-semibold"
+              style={{ borderColor: item.color, color: item.color }}
+            >
+              {item.name}: {item.count}
+            </span>
+          ))}
+        </div>
       </div>
 
       <MotionButton

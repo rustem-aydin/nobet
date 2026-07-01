@@ -14,7 +14,7 @@ export const getAllDutyTypes = async (
     collection: 'duty_types',
     depth,
     limit: 100,
-    sort: 'columnOrder',
+    sort: 'priority',
     where: {
       and: [
         {

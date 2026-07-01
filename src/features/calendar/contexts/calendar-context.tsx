@@ -206,10 +206,8 @@ export function CalendarProvider({
       const duty_exceptions = await AddDutyExceptions(event)
       setAllEvents((prev) => [...prev, duty_exceptions])
       setFilteredEvents((prev) => [...prev, duty_exceptions])
-      toast.success('Mazeret eklendi')
       return duty_exceptions
     } catch (error) {
-      toast.error(String(error))
       throw error
     }
   }
@@ -219,10 +217,8 @@ export function CalendarProvider({
       const updated = await updateDutyException({ id, values })
       setAllEvents((prev) => prev.map((e) => (e.id === id ? updated : e)))
       setFilteredEvents((prev) => prev.map((e) => (e.id === id ? updated : e)))
-      toast.success('Mazeret güncellendi')
       return updated
     } catch (error) {
-      toast.error(String(error))
       throw error
     }
   }
@@ -245,7 +241,6 @@ export function CalendarProvider({
     } catch (error) {
       setAllEvents(previousAll)
       setFilteredEvents(previousFiltered)
-      toast.error('Silme işlemi başarısız')
       throw error
     }
   }
