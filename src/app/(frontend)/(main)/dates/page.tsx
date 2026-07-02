@@ -7,6 +7,7 @@ import { DatesFilterParams } from 'types'
 import Content from '@/features/dates/dates-content'
 import { getAuth } from '@/collections/Personnel/actions/auth'
 import { notFound } from 'next/navigation'
+import { personnelIsAdminOrIsChief } from '@/collections/Personnel/helpers'
 
 export default async function DatesPage({
   searchParams,
@@ -17,7 +18,8 @@ export default async function DatesPage({
   const year = params?.year
   const dutyTypes = await getAllDutyTypes(0, year)
   const auth = await getAuth()
-  if (auth.role !== 'admin' && auth.role !== 'chief') {
+  const isVisible = personnelIsAdminOrIsChief({ personnel: auth })
+  if (!isVisible) {
     return notFound()
   }
   return (

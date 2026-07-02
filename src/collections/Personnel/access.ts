@@ -1,10 +1,11 @@
 import { Group } from '@/payload-types'
 import { Access } from 'payload'
+import { personnelIsAdmin, personnelIsAdminOrIsChief, personnelIsMember } from './helpers'
 
 export const GroupChief: Access = ({ req }) => {
   if (!req.user) return false
-  else if (req.user.role === 'admin') return true
-  else if (req.user.role === 'member') return false
+  else if (personnelIsAdmin({ personnel: req.user })) return true
+  else if (personnelIsMember({ personnel: req.user })) return false
   const userGroupId = (req.user.group as Group)?.id || req.user.group
   if (!userGroupId) return false
   return {
@@ -16,7 +17,7 @@ export const GroupChief: Access = ({ req }) => {
 
 export const canRead: Access = async ({ req }) => {
   if (!req.user) return false
-  if (req.user.role === 'admin' || req.user.role === 'chief') return true
+  if (personnelIsAdminOrIsChief({ personnel: req.user })) return true
 
   return {
     aktif: {

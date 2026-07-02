@@ -1,6 +1,7 @@
 'use client'
 
-import { ReactNode, useState, useEffect, useRef } from 'react'
+import { ReactNode, useState, useEffect, useMemo } from 'react'
+
 import {
   ContextMenu,
   ContextMenuContent,
@@ -11,16 +12,22 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu'
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+
 import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
+
 import { ArrowLeftRight, Info, Trash2, User, Users } from 'lucide-react'
+
 import { useSchedule } from '../contexts/schedule-context'
 import { DutySchedule, DutyType, Personnel } from '@/payload-types'
 import { getStatus } from '@/helpers/dutyScheduler'
 import { Badge } from '@/components/ui/badge'
 import { SwapRequestModal } from '../swap-request-modal'
 import { NobetdasDialog } from './nobetdas-dialog'
+import { personnelIsAdminOrIsChief } from '@/collections/Personnel/helpers'
+import { CountdownTimer } from './countdown-timer'
 
 interface Props {
   children: ReactNode
@@ -30,7 +37,8 @@ interface Props {
   auth: any
 }
 
-// ---------- Yardımcı fonksiyonlar (değişmedi) ----------
+// ---------- Yardımcılar ----------
+
 function getNext9AM(): Date {
   const now = new Date()
   const next = new Date(now)
@@ -48,84 +56,37 @@ function isCurrentlyOnDuty(dutyDate: Date): boolean {
   return now >= start && now < end
 }
 
-function formatCountdown(seconds: number): string {
-  if (seconds <= 0) return '00:00:00'
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = seconds % 60
-  return [h, m, s].map((v) => String(v).padStart(2, '0')).join(':')
-}
 // -------------------------------------------
 
 export function ScheduleContextMenu({ children, date, dutyRecord, assignedPerson, auth }: Props) {
-  const { handleDeleteDuty, schedules } = useSchedule()
+  const { handleDeleteDuty } = useSchedule()
   const [swapOpen, setSwapOpen] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
-  const [nobetdasOpen, setNobetdasOpen] = useState(false) // Yeni state
+  const [nobetdasOpen, setNobetdasOpen] = useState(false)
   const [swapType, setSwapType] = useState<'mutual' | 'unilateral'>('mutual')
 
-  // Dialog geri sayım state ve interval ref
-  const [countdownDialog, setCountdownDialog] = useState('')
-  const intervalDialogRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  // Hücre geri sayım state ve interval ref
-  const [countdownCell, setCountdownCell] = useState('')
-  const intervalCellRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  const isChief = auth?.role === 'admin' || auth?.role === 'chief'
+  const isChief = personnelIsAdminOrIsChief({ personnel: auth })
   const isOwnDuty = assignedPerson?.id === auth?.id
   const { color, text } = getStatus(dutyRecord.status)
   const isCompleted = dutyRecord.status === 'completed'
 
   const activeDuty = isCurrentlyOnDuty(date)
 
-  // ---------- Dialog geri sayımı ----------
+  // useMemo ile sabitle: CountdownTimer'ın effect'i gereksiz yere yeniden başlamasın
+  const next9AM = useMemo(() => getNext9AM(), [activeDuty])
+
+  // Sadece 9 AM'de sayfa yenileme (countdown ayrı component'te)
   useEffect(() => {
-    if (detailOpen) {
-      const next9AM = getNext9AM()
-      const tick = () => {
-        const diff = Math.floor((next9AM.getTime() - Date.now()) / 1000)
-        setCountdownDialog(formatCountdown(diff))
-      }
-      tick()
-      intervalDialogRef.current = setInterval(tick, 1000)
-    } else {
-      if (intervalDialogRef.current) {
-        clearInterval(intervalDialogRef.current)
-        intervalDialogRef.current = null
-      }
-    }
-    return () => {
-      if (intervalDialogRef.current) clearInterval(intervalDialogRef.current)
-    }
-  }, [detailOpen])
+    if (!activeDuty) return
+    const timeUntilRefresh = next9AM.getTime() - Date.now()
+    if (timeUntilRefresh <= 0) return
 
-  // ---------- Hücre geri sayımı + otomatik yenileme ----------
-  useEffect(() => {
-    if (activeDuty) {
-      const next9AM = getNext9AM()
-      const timeUntilRefresh = next9AM.getTime() - Date.now()
+    const refreshTimer = setTimeout(() => {
+      window.location.reload()
+    }, timeUntilRefresh)
 
-      const tick = () => {
-        const diff = Math.floor((next9AM.getTime() - Date.now()) / 1000)
-        setCountdownCell(formatCountdown(diff))
-      }
-      tick()
-      intervalCellRef.current = setInterval(tick, 1000)
-
-      let refreshTimer: ReturnType<typeof setTimeout> | null = null
-      if (timeUntilRefresh > 0) {
-        refreshTimer = setTimeout(() => {
-          window.location.reload()
-        }, timeUntilRefresh)
-      }
-
-      return () => {
-        if (intervalCellRef.current) clearInterval(intervalCellRef.current)
-        if (refreshTimer) clearTimeout(refreshTimer)
-      }
-    }
-  }, [activeDuty])
+    return () => clearTimeout(refreshTimer)
+  }, [activeDuty, next9AM])
 
   return (
     <>
@@ -134,15 +95,15 @@ export function ScheduleContextMenu({ children, date, dutyRecord, assignedPerson
           <div className="relative">
             {children}
             {activeDuty && (
-              <div className="absolute bottom-0 right-0 bg-background/80 px-1 text-[10px] font-mono tabular-nums rounded leading-tight">
-                {countdownCell || '--:--:--'}
+              <div className="absolute bottom-0 right-0 bg-background/80 px-1 text-[10px] rounded leading-tight">
+                <CountdownTimer target={next9AM} />
               </div>
             )}
           </div>
         </ContextMenuTrigger>
 
         <ContextMenuContent className="w-56">
-          {/* Değişim, silme vb. işlemler (aynı) */}
+          {/* ... aynı menü öğeleri, dokunmadım ... */}
           {!isCompleted && !activeDuty && (
             <>
               {!isOwnDuty && dutyRecord && (
@@ -178,15 +139,13 @@ export function ScheduleContextMenu({ children, date, dutyRecord, assignedPerson
               )}
 
               {isChief && dutyRecord && (
-                <>
-                  <ContextMenuItem
-                    className="cursor-pointer hover:bg-background"
-                    onClick={() => setSwapOpen(true)}
-                  >
-                    <User className="mr-2 h-4 w-4" />
-                    Nöbeti Değiştir (Chief)
-                  </ContextMenuItem>
-                </>
+                <ContextMenuItem
+                  className="cursor-pointer hover:bg-background"
+                  onClick={() => setSwapOpen(true)}
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Nöbeti Değiştir (Chief)
+                </ContextMenuItem>
               )}
 
               {isChief && (
@@ -206,7 +165,6 @@ export function ScheduleContextMenu({ children, date, dutyRecord, assignedPerson
             </>
           )}
 
-          {/* Detaylar tetikleyici */}
           <ContextMenuItem
             className="cursor-pointer hover:bg-background"
             onClick={() => setDetailOpen(true)}
@@ -216,7 +174,6 @@ export function ScheduleContextMenu({ children, date, dutyRecord, assignedPerson
           </ContextMenuItem>
           <ContextMenuSeparator />
 
-          {/* Nobetdas tetikleyici – artık sadece menü öğesi */}
           <ContextMenuItem
             className="cursor-pointer hover:bg-background"
             onClick={() => setNobetdasOpen(true)}
@@ -227,7 +184,6 @@ export function ScheduleContextMenu({ children, date, dutyRecord, assignedPerson
         </ContextMenuContent>
       </ContextMenu>
 
-      {/* SwapRequestModal (değişmedi) */}
       <SwapRequestModal
         open={swapOpen}
         onOpenChange={setSwapOpen}
@@ -238,7 +194,6 @@ export function ScheduleContextMenu({ children, date, dutyRecord, assignedPerson
         auth={auth}
       />
 
-      {/* Detaylar Diyaloğu */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent>
           <DialogHeader>
@@ -286,8 +241,8 @@ export function ScheduleContextMenu({ children, date, dutyRecord, assignedPerson
             {activeDuty && (
               <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-center">
                 <p className="text-xs text-muted-foreground">Sonraki nöbet değişimine kalan süre</p>
-                <p className="text-lg font-mono font-semibold tabular-nums">
-                  {countdownDialog || '--:--:--'}
+                <p className="text-lg font-semibold">
+                  <CountdownTimer target={next9AM} />
                 </p>
               </div>
             )}
@@ -295,7 +250,6 @@ export function ScheduleContextMenu({ children, date, dutyRecord, assignedPerson
         </DialogContent>
       </Dialog>
 
-      {/* Nobetdas Diyaloğu – context menu dışında, bağımsız olarak render edilir */}
       <NobetdasDialog dutyRecord={dutyRecord} open={nobetdasOpen} onOpenChange={setNobetdasOpen} />
     </>
   )

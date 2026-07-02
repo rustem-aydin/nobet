@@ -110,9 +110,7 @@ export function ScheduleProvider({
 
       try {
         await operation
-      } catch {
-        // hata toast ile gösteriliyor
-      }
+      } catch {}
     })
   }
 
@@ -120,12 +118,7 @@ export function ScheduleProvider({
     try {
       toast.promise(deleteDutySchedule({ date, personnel: user }), {
         loading: 'Nöbet siliniyor',
-        success: (data: any) => {
-          return (
-            String(((data?.duty as DutySchedule).personnel as Personnel).fullName) +
-            ` Nöbet Silindi`
-          )
-        },
+        success: String(user.fullName) + ` Nöbet Silindi`,
         error: (err) => String(err),
       })
     } catch (error) {

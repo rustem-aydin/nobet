@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { Group, Personnel } from '@/payload-types'
 import { NavMenu } from './nav-main'
+import { personnelIsMember } from '@/collections/Personnel/helpers'
 
 const data = {
   navMain: [
@@ -76,7 +77,9 @@ export function AppSidebar({ personnel, ...props }: AppSidebarProps) {
         <NavMenu label="Genel" items={data.navMain} />
         <NavMenu label="Nöbet" items={data.duty} />
         <NavMenu label="Diğer" items={data.others} />
-        {personnel.role === 'member' ? null : <NavMenu label="Ayarlar" items={data.settings} />}
+        {personnelIsMember({ personnel: personnel }) ? null : (
+          <NavMenu label="Ayarlar" items={data.settings} />
+        )}
       </SidebarContent>
       <SidebarFooter>
         <NavUser personnel={personnel} />

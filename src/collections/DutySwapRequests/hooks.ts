@@ -1,6 +1,7 @@
 import { CollectionBeforeChangeHook, CollectionAfterChangeHook } from 'payload'
 import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
+import { personnelIsAdmin, personnelIsAdminOrIsChief, personnelIsChief } from '../Personnel/helpers'
 
 // ─── YARDIMCI FONKSİYONLAR ──────────────────────────────────────────────
 const toLocalDateString = (date: Date) => format(date, 'yyyy-MM-dd')
@@ -135,7 +136,7 @@ export const swapBeforeChange: CollectionBeforeChangeHook = async ({
   if (isCreate) {
     data.createdBy = user.id
     // Eğer oluşturan admin/chief ise status'u approved yap (otomatik onay)
-    if (user.role === 'admin' || user.role === 'chief') {
+    if (personnelIsAdminOrIsChief({ personnel: user })) {
       data.status = 'approved'
     } else {
       data.status = 'pending'
@@ -198,7 +199,7 @@ export const swapBeforeChange: CollectionBeforeChangeHook = async ({
   }
 
   // 3. Normal kullanıcı güncelleme yapıyorsa sadece status'u cancelled yapabilir (iptal)
-  if (isUpdate && user.role !== 'admin' && user.role !== 'chief') {
+  if (isUpdate && personnelIsAdmin({ personnel: user }) && personnelIsChief({ personnel: user })) {
     if (originalDoc.status !== 'pending') {
       throw new Error('Bu talep artık iptal edilemez.')
     }

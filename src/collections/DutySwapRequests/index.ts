@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { isAdminOrChief } from './access'
+import { personnelIsAdminOrIsChief } from '../Personnel/helpers'
 
 export const DutySwapRequests: CollectionConfig = {
   slug: 'duty_swap_requests',
@@ -12,10 +13,10 @@ export const DutySwapRequests: CollectionConfig = {
     singular: 'Nöbet Değişim Talebi',
   },
   access: {
-    create: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'chief',
+    create: isAdminOrChief,
     update: isAdminOrChief,
     delete: isAdminOrChief,
-    read: ({ req: { user } }) => user?.role === 'admin' || user?.role === 'chief',
+    read: isAdminOrChief,
   },
   fields: [
     {

@@ -11,14 +11,14 @@ export const Personnel: CollectionConfig = {
     group: 'Personeller',
 
     useAsTitle: 'fullName',
-    defaultColumns: ['fullName', 'rank', 'lastDutyDate', 'dutyCounts', 'role'],
+    defaultColumns: ['id', 'fullName', 'rank', 'lastDutyDate', 'dutyCounts'],
   },
   labels: {
     singular: 'Personel',
     plural: 'Personeller',
   },
   access: {
-    admin: ({ req: { user } }: any) => user?.role === 'admin',
+    admin: ({ req: { user } }: any) => user?.is_admin === true,
 
     create: GroupChief,
     update: GroupChief,
@@ -50,6 +50,7 @@ export const Personnel: CollectionConfig = {
       name: 'group',
       type: 'relationship',
       relationTo: 'groups',
+      maxDepth: 2,
       admin: {
         condition: (_, siblingData) => Boolean(siblingData?.id), // ← sadece düzenleme ekranında göster
       },
@@ -100,19 +101,12 @@ export const Personnel: CollectionConfig = {
       on: 'personnel',
     },
     {
-      name: 'role',
-      type: 'select',
-      required: true,
-      defaultValue: 'member',
+      name: 'is_admin',
+      type: 'checkbox',
       admin: {
         condition: (_, siblingData) => Boolean(siblingData?.id),
       },
-      options: [
-        { label: 'Admin', value: 'admin' },
-        { label: 'Nöbet Kıdemlisi', value: 'chief' },
-        { label: 'Üye', value: 'member' },
-      ],
-      label: 'Rol',
+      label: 'Admin Mi',
     },
   ],
 }

@@ -30,6 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { personnelIsAdmin, personnelIsChief } from '@/collections/Personnel/helpers'
 
 interface IProps {
   event: DutyException
@@ -45,8 +46,8 @@ export function EventDetailsDialog({ event, children }: IProps) {
   const endDate = parseISO(event.endDate)
   const { removeEvent, auth, updateEvent } = useCalendar()
 
-  const isAdmin = auth.role === 'admin'
-  const isChief = auth.role === 'chief'
+  const isAdmin = personnelIsAdmin({ personnel: auth })
+  const isChief = personnelIsChief({ personnel: auth })
   const isApprover = isAdmin || isChief
   const isOwner = (event.personnel as Personnel).email === auth.email
   const isApproved = event.status === 'approved'

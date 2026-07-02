@@ -25,11 +25,13 @@ import { DutyType, Personnel } from '@/payload-types'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Edit } from 'lucide-react'
-import { updatePersonnelSchema, UpdatePersonnelFormValues } from 'types/schemas'
+import { UpdatePersonnelFormValues, updatePersonnelSchema } from 'types/schemas'
 import { updatePersonnel } from '@/collections/Personnel/actions/updatePersonnel'
 import ConfirmDialog from '@/components/confirm-dialog'
 import { deletePersonnel } from '@/collections/Personnel/actions/deletePersonnel'
 import { checkEmailUnique } from '@/collections/Personnel/actions/checkEmailUnique'
+import { personnelIsChief } from '@/collections/Personnel/helpers'
+import { updateGroup } from '@/collections/Group/actions/updateGroup'
 
 export function UpdatePersonel({
   dutyTypes,
@@ -90,7 +92,6 @@ export function UpdatePersonel({
     })
   }, [personnel, form])
 
-  // Tip hatasını önlemek için any kullanımı (Payload tipi yetersiz olduğu için)
   const getCountForDutyType = (dutyTypeId: number): number => {
     const docs = (personnel.counts?.docs as any[]) ?? []
     const found = docs.find((item: any) => item.dutyType?.id === dutyTypeId)
@@ -190,7 +191,21 @@ export function UpdatePersonel({
                 </FormItem>
               )}
             />
-
+            {!personnelIsChief({ personnel }) && (
+              <Button
+                onClick={() => {
+                  toast.promise(updateGroup(personnel), {
+                    loading: 'Nöbet Kıdemlisi Yapılıyor.',
+                    success: 'Nöbet Kıdemlisi Yapıldı',
+                    error: (err) => String(err),
+                  })
+                }}
+                type="button"
+                variant="default"
+              >
+                Nöbet Kıdemlisi Yap
+              </Button>
+            )}
             <div className="border rounded-lg p-3 space-y-3">
               <h4 className="text-sm font-medium text-muted-foreground">
                 Nöbet Tipi Sıralamaları (Görüntüleme)

@@ -1,11 +1,12 @@
 'use client'
 
-import { Personnel, DutyType } from '@/payload-types'
+import { Personnel, DutyType, Group } from '@/payload-types'
 import { ScheduleCeteleCell } from './schedule-cetele-cell'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical } from 'lucide-react'
 import { UpdatePersonel } from './update-personel'
+import { personnelIsAdminOrIsChief } from '@/collections/Personnel/helpers'
 
 interface Item {
   date: Date
@@ -40,14 +41,13 @@ export function ScheduleCeteleRow({
     id,
     disabled: !isDraggable,
   })
-  const isAdmin = auth.role === 'admin' || auth.role === 'chief'
-
+  const isAdmin = personnelIsAdminOrIsChief({ personnel: auth })
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   }
-
+  const group = personnel.group as Group
   return (
     <tr ref={setNodeRef} style={style} className="border-b hover:bg-muted/30">
       <td className="sticky left-0 z-10 bg-background border-r px-3 py-2 text-center text-muted-foreground">
@@ -75,7 +75,7 @@ export function ScheduleCeteleRow({
           >
             {personnel.fullName}
           </span>
-          {isAdmin && <UpdatePersonel personnel={personnel} dutyTypes={dutyTypes} />}
+          {isAdmin && <UpdatePersonel dutyTypes={dutyTypes} personnel={personnel} />}
         </div>
       </td>
 

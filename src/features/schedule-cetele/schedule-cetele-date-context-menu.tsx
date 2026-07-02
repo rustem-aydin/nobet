@@ -14,6 +14,7 @@ import {
 import { ArrowLeftRight, FileWarning, Info, User } from 'lucide-react'
 import { DutyType, Personnel } from '@/payload-types'
 import { NobetDetayModal } from './nöbet-detay-modal'
+import { personnelIsAdminOrIsChief } from '@/collections/Personnel/helpers'
 
 interface Props {
   children: ReactNode
@@ -39,7 +40,7 @@ export function ScheduleCeteleDateContextMenu({
   const [exceptionOpen, setExceptionOpen] = useState(false)
   const [detailOpen, setDetailOpen] = useState(false)
 
-  const isChief = auth?.role === 'admin' || auth?.role === 'chief'
+  const isChief = personnelIsAdminOrIsChief({ personnel: auth })
   const isOwnDuty = personnel?.id === auth?.id
   const canSwap = isOwnDuty || isChief
 

@@ -23,6 +23,7 @@ import { AddPersonel } from './add-personel'
 import { toast } from 'sonner'
 import { startOfDay, isBefore, isSameDay, isAfter } from 'date-fns'
 import { ScheduleCeteleRow } from './schedule-cetele-row'
+import { personnelIsAdminOrIsChief } from '@/collections/Personnel/helpers'
 
 type ScheduleMap = Map<number, Array<{ date: Date; status: string; exceptionType?: string }>>
 
@@ -40,7 +41,7 @@ export function ScheduleCeteleTable({ dutyType, personnels, scheduleMap, dutyTyp
     (state, newPersonnels: Personnel[]) => newPersonnels,
   )
   const [isPending, startTransition] = useTransition()
-  const isAdmin = auth.role === 'admin' || auth.role === 'chief'
+  const isAdmin = personnelIsAdminOrIsChief({ personnel: auth })
   const today = startOfDay(new Date())
 
   // 👇 Her personel için beklenen count'u bul

@@ -37,13 +37,11 @@ export function ScheduleMonthView({ year, month, dutyTypeId, schedules, loading 
     return map
   }, [schedules, selectedPersonnel])
 
-  // ✅ yearConfigs yok artık — helper içinde dt.isActive + dt.year === year kontrolü yapıyor
   const dutyTypesWithDates = useMemo(
     () => expandDutyTypesToDates(duty_types, year),
     [duty_types, year],
   )
 
-  // ✅ Her hücre için cron-tabanlı eşleştirme → en yüksek öncelikli nöbet türü
   const cellDutyTypes = useMemo(() => {
     const map = new Map<string, ReturnType<typeof getDutyTypeForDate>>()
     cells.forEach((cell) => {

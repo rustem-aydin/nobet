@@ -1,8 +1,11 @@
 'use client'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { DutySchedule, Personnel } from '@/payload-types'
-import { getNobetdasPersonnels } from '@/collections/Personnel/actions/getNobetdasPersonnel'
+import { DutySchedule, Group, Personnel } from '@/payload-types'
+import {
+  DutyScheduleLite,
+  getNobetdasPersonnels,
+} from '@/collections/Personnel/actions/getNobetdasPersonnel'
 import { useEffect, useState } from 'react'
 
 interface Props {
@@ -12,7 +15,7 @@ interface Props {
 }
 
 export const NobetdasDialog = ({ open, onOpenChange, dutyRecord }: Props) => {
-  const [nobetdas, setNobetdas] = useState<DutySchedule[]>()
+  const [nobetdas, setNobetdas] = useState<DutyScheduleLite[]>()
   useEffect(() => {
     if (!open) return
     let cancelled = false
@@ -32,11 +35,15 @@ export const NobetdasDialog = ({ open, onOpenChange, dutyRecord }: Props) => {
           <DialogTitle>Nöbetdaş</DialogTitle>
         </DialogHeader>
 
-        {nobetdas?.map((per: DutySchedule) => {
+        {nobetdas?.map((per: DutyScheduleLite) => {
+          console.log((per.personnel as Personnel).group)
           return (
-            <p key={per.id} className="text-sm text-muted-foreground">
-              {(per.personnel as Personnel).fullName}
-            </p>
+            <div key={per.id} className="flex flex-col">
+              <span>{((per.personnel as Personnel).group as Group).name}</span>
+              <p className="text-sm text-muted-foreground">
+                {(per.personnel as Personnel).fullName}
+              </p>
+            </div>
           )
         })}
       </DialogContent>

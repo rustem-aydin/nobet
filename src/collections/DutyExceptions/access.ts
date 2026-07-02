@@ -1,5 +1,6 @@
 import { Group, Personnel } from '@/payload-types'
 import type { Access, FieldAccess, Where } from 'payload'
+import { personnelIsAdmin, personnelIsChief, personnelIsMember } from '../Personnel/helpers'
 
 const getUserGroupId = (user: any): string | undefined => {
   return (user.group as Group)?.id || user.group
@@ -11,7 +12,7 @@ const getUserPersonnelId = (user: any): string | undefined => {
 
 export const canRead: Access = async ({ req }) => {
   if (!req.user) return false
-  if (req.user.role === 'admin') return true
+  if (personnelIsAdmin({ personnel: req.user })) return true
 
   // ✅ DOĞRU KULLANIM (Aynı dosyadaki helper fonksiyonu kullan)
   const userGroupId = getUserGroupId(req.user)
@@ -28,7 +29,7 @@ export const canRead: Access = async ({ req }) => {
 // ============================================
 export const canCreate: Access = ({ req, data }) => {
   if (!req.user) return false
-  if (req.user.role === 'admin') return true
+  if (personnelIsAdmin({ personnel: req.user })) return true
 
   const userPersonnelId = getUserPersonnelId(req.user)
 
@@ -45,13 +46,13 @@ export const canCreate: Access = ({ req, data }) => {
 // ============================================
 export const canUpdate: Access = async ({ req, data, id }) => {
   if (!req.user) return false
-  if (req.user.role === 'admin') return true
+  if (personnelIsAdmin({ personnel: req.user })) return true
 
   const userPersonnelId = getUserPersonnelId(req.user)
   if (!userPersonnelId) return false
 
   // Chief: Sadece status alanını güncelleyebilir
-  if (req.user.role === 'chief') {
+  if (personnelIsChief({ personnel: req.user })) {
     // data'da sadece status varsa ve başka alan yoksa izin ver
     if (data) {
       const allowedFields = ['status', 'id', 'updatedAt', 'createdAt']
@@ -72,7 +73,7 @@ export const canUpdate: Access = async ({ req, data, id }) => {
     }
     return where
   }
-  if (req.user.role === 'member') {
+  if (personnelIsMember({ personnel: req.user })) {
     if (data) {
       const allowedFields = ['status']
       const dataKeys = Object.keys(data)
@@ -95,7 +96,7 @@ export const canUpdate: Access = async ({ req, data, id }) => {
 // ============================================
 export const canDelete: Access = async ({ req, id }) => {
   if (!req.user) return false
-  if (req.user.role === 'admin') return true
+  if (personnelIsAdmin({ personnel: req.user })) return true
 
   const userPersonnelId = getUserPersonnelId(req.user)
   if (!userPersonnelId) return false
@@ -116,7 +117,7 @@ export const canDelete: Access = async ({ req, id }) => {
 
 export const statusCreateAccess: FieldAccess = ({ req, data, siblingData }) => {
   if (!req.user) return false
-  if (req.user.role === 'admin') return true
+  if (personnelIsAdmin({ personnel: req.user })) return true
   // Herkes create'te set edebilir (default pending)
   return true
 }
@@ -127,12 +128,10 @@ export const statusReadAccess: FieldAccess = ({ req, id, doc, siblingData }) => 
   return true
 }
 
-export const statusUpdateAccess: FieldAccess = ({ req, id, data, siblingData, doc }) => {
+export const statusUpdateAccess: FieldAccess = ({ req }) => {
   if (!req.user) return false
-  if (req.user.role === 'admin') return true
-  // Chief güncelleyebilir
-  if (req.user.role === 'chief') return true
-  if (req.user.role === 'member') return false
-  // Member: Sadece kendi kaydı
+  if (personnelIsAdmin({ personnel: req.user })) return true
+  if (personnelIsChief({ personnel: req.user })) return true
+  if (personnelIsMember({ personnel: req.user })) return false
   return false
 }

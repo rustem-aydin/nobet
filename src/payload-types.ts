@@ -186,7 +186,7 @@ export interface Personnel {
     hasNextPage?: boolean;
     totalDocs?: number;
   };
-  role?: ('admin' | 'chief' | 'member') | null;
+  is_admin?: boolean | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -555,7 +555,7 @@ export interface PersonnelSelect<T extends boolean = true> {
   counts?: T;
   exceptions?: T;
   schedule?: T;
-  role?: T;
+  is_admin?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

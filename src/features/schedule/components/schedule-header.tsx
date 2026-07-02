@@ -18,6 +18,7 @@ import { ScheduleTodayButton } from './ScheduleTodayButton'
 import ConfirmDialog from '@/components/confirm-dialog'
 import { InteractiveLogsTable } from '@/components/interactiveLogsTable'
 import { getPersonnelIcon } from './personnel-lists'
+import { personnelIsAdminOrIsChief } from '@/collections/Personnel/helpers'
 
 export function ScheduleHeader() {
   const {
@@ -38,7 +39,7 @@ export function ScheduleHeader() {
     month,
   } = useSchedule()
 
-  const isChief = auth?.role === 'admin' || auth?.role === 'chief'
+  const isChief = personnelIsAdminOrIsChief({ personnel: auth })
 
   const schedulesInMonth = schedules.filter((s) => {
     const scheduleDate = new Date(s.dutyDate)

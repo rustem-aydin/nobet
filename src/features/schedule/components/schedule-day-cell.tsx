@@ -84,8 +84,8 @@ export function ScheduleDayCell({ cell, schedules, dutyTypeId, dutyType }: Props
 
       <span
         className={cn(
-          'text-xs p-1 w-fit',
-          isToday(date) && 'bg-primary text-white rounded-full px-1.5',
+          'text-xs p-1 px-2 w-fit',
+          isToday(date) && 'bg-primary text-white rounded-full mx-1 mt-1 h-6 w-6',
         )}
       >
         {day}
@@ -152,7 +152,7 @@ export function ScheduleDayCell({ cell, schedules, dutyTypeId, dutyType }: Props
             )
           })
         ) : (
-          <span className="flex flex-col text-center items-center text-xs font-bold justify-center h-full text-gray-500 text-sm">
+          <span className="flex flex-col text-center items-center text-xs font-bold justify-center h-full text-gray-500 ">
             <Ban className="text-gray-500 text-sm" />
             Nöbet Bilgisi Bulunamadı
           </span>

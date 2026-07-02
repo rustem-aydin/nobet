@@ -1,7 +1,9 @@
 import { Access } from 'payload'
+import { personnelIsAdminOrIsChief } from '../Personnel/helpers'
 
 export const isAdminOrChief: Access = ({ req: { user } }) => {
-  return user?.role === 'admin' || user?.role === 'chief'
+  if (!user) return false
+  return personnelIsAdminOrIsChief({ personnel: user })
 }
 
 export const canCreateSwap: Access = ({ req: { user } }) => {
@@ -10,7 +12,7 @@ export const canCreateSwap: Access = ({ req: { user } }) => {
 
 export const canReadSwap: Access = ({ req: { user } }) => {
   if (!user) return false
-  if (user.role === 'admin' || user.role === 'chief') return true
+  if (personnelIsAdminOrIsChief({ personnel: user })) return true
 
   // Sadece kendi taleplerini görebilir
   return {
@@ -24,7 +26,7 @@ export const canReadSwap: Access = ({ req: { user } }) => {
 
 export const canUpdateSwap: Access = ({ req: { user } }) => {
   if (!user) return false
-  if (user.role === 'admin' || user.role === 'chief') return true
+  if (personnelIsAdminOrIsChief({ personnel: user })) return true
 
   // Normal kullanıcı sadece kendi pending talebini iptal edebilir
   return {

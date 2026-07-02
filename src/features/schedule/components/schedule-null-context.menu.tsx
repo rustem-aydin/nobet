@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { personnelIsMember } from '@/collections/Personnel/helpers'
 interface Props {
   children: ReactNode
   date: Date
@@ -43,7 +44,7 @@ export function ScheduleNullContextMenu({ children, date, dutyTypeId }: Props) {
     setDetailOpen(false)
   }
 
-  if (auth?.role !== 'chief' && auth?.role !== 'admin') {
+  if (personnelIsMember({ personnel: auth })) {
     return <>{children}</>
   }
   return (

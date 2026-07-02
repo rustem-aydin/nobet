@@ -15,6 +15,7 @@ import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
 import { DutySchedule, Personnel } from '@/payload-types'
 import { useSchedule } from './contexts/schedule-context'
+import { personnelIsAdminOrIsChief } from '@/collections/Personnel/helpers'
 
 interface Props {
   open: boolean
@@ -23,7 +24,7 @@ interface Props {
   dutyRecord: DutySchedule
   assignedPerson: Personnel
   swapType: 'mutual' | 'unilateral'
-  auth: any
+  auth: Personnel
 }
 
 export function SwapRequestModal({
@@ -40,7 +41,7 @@ export function SwapRequestModal({
   const [requesterDuty, setRequesterDuty] = useState<number>(dutyRecord.id)
   const [loading, setLoading] = useState(false)
 
-  const isChief = auth?.role === 'admin' || auth?.role === 'chief'
+  const isChief = personnelIsAdminOrIsChief({ personnel: auth })
   const otherPersonnels = personnels.filter((p) => p.id !== assignedPerson?.id)
 
   const handleSubmit = async () => {

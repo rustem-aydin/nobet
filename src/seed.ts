@@ -16,7 +16,7 @@ export async function seedData(payload: Payload) {
       group: data?.id,
       email: 'rustema@hvkk.tsk.tr',
       password: 'admin',
-      role: 'admin',
+      is_admin: true,
       fullName: 'Rüstem AYDIN',
     },
   })
